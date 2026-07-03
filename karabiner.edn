@@ -410,8 +410,13 @@
            [:!F#Pb [:!Cb] :code]                 ;; covers VSCode + Windsurf (same bundle group)
            [:!F#Pb [:!CTs] :finder]
            [:!F#Pb [:!Cbackslash] :notion]
+
            [:!F#Pb [:!SCl] :obsidian]
-           [:!F#Pv [:!CTs] :obsidian]
+           [:!SC#Pe [:!SCl ["obs_files" 0]]                     [:obsidian :obs_files]]    ;; on Files  -> close
+           [:!SC#Pe [:!SC#Pe ["obs_files" 1] ["obs_recents" 0]] [:obsidian :!obs_files]]   ;; closed/Recents -> open/switch to Files
+
+           [:!SC#Pr [:!SCl ["obs_recents" 0]]                     [:obsidian :obs_recents]]  ;; on Recents -> close
+           [:!SC#Pr [:!SC#Pr ["obs_recents" 1] ["obs_files" 0]]   [:obsidian :!obs_recents]] ;; closed/Files -> open/switch to Recents
            [:!F#Pb [:!CTs] :mail]
            [:!F#Pb [:!CO2 ["previewsidebar" 0]] :preview1]
            [:!F#Pb [:!CO1 ["previewsidebar" 1]] :preview0]
