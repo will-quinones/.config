@@ -342,7 +342,8 @@
            [:#Pc [["clean-mode" 0] [:close-app "KeyboardCleanTool"]] [:launch-mode :clean-mode]]]}
 
   {:des "Navigation Tabs Obsidian"
-   :rules [[:!F#Pi :!SOopen_bracket]
+   :rules [:obsidian
+           [:!F#Pi :!SOopen_bracket]
            [:!F#Po :!SOclose_bracket]]}
   {:des "Navigation Tabs"
    :rules [[:!F#Pi :!SCopen_bracket]

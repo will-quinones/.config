@@ -2876,6 +2876,10 @@
             "key_code" : "open_bracket",
             "modifiers" : [ "left_option", "left_shift" ]
           } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^md\\.obsidian$" ]
+          } ],
           "type" : "basic"
         }, {
           "from" : {
@@ -2888,6 +2892,10 @@
           "to" : [ {
             "key_code" : "close_bracket",
             "modifiers" : [ "left_option", "left_shift" ]
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^md\\.obsidian$" ]
           } ],
           "type" : "basic"
         } ]
