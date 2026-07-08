@@ -85,12 +85,6 @@
    :rules [[:#Pright_shift :right_shift nil {:alone :!OFdelete_or_backspace}]
            [:#Pleft_shift :left_shift nil {:alone :!Odelete_or_backspace}]]}
 
-  {:des "Directional Keys"
-   :rules [[:!F##j :up_arrow]
-           [:!F##k :left_arrow]
-           [:!F##l :right_arrow]
-           [:!F##semicolon :down_arrow]]}
-
   ;; ════════════════════════════════ Anki ════════════════════════════════════
   {:des "Toggle Anki"
    :rules [[[:right_control {:pkey :button2}] [:yabai "window --toggle anki || open -a Anki"]]
@@ -331,7 +325,11 @@
            [:#Pperiod :illumination_increment :c-mode]
            [:#Pq :display_brightness_decrement :mouse-mode4]
            [:#Pr :display_brightness_increment :mouse-mode4]]}
-
+  {:des "Directional Keys"
+   :rules [[:!F##j :up_arrow]
+           [:!F##k :left_arrow]
+           [:!F##l :right_arrow]
+           [:!F##semicolon :down_arrow]]}
   {:des "Scroll control"
    :rules [[:!F#CP9 {:mkey {:vwheel 30 :speed 2}}]
            [:!F#CP8 {:mkey {:vwheel -30 :speed 2}}]
