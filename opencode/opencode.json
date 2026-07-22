@@ -712,7 +712,10 @@
   "default_agent": "gentle-orchestrator",
   "mcp": {
     "atlassian": {
-      "command": ["/Users/williamquinones/.local/bin/uvx", "mcp-atlassian"],
+      "command": [
+        "/Users/williamquinones/.local/bin/uvx",
+        "mcp-atlassian"
+      ],
       "enabled": true,
       "environment": {
         "JIRA_API_TOKEN": "{env:JIRA_API_TOKEN}",
@@ -727,7 +730,11 @@
       "url": "https://mcp.context7.com/mcp"
     },
     "engram": {
-      "command": ["/opt/homebrew/bin/engram", "mcp", "--tools=agent"],
+      "command": [
+        "/opt/homebrew/bin/engram",
+        "mcp",
+        "--tools=agent"
+      ],
       "type": "local"
     }
   },
@@ -758,7 +765,9 @@
       "*.env.*": "deny"
     }
   },
-  "plugin": ["@warp-dot-dev/opencode-warp"],
+  "plugin": [
+    "@warp-dot-dev/opencode-warp"
+  ],
   "share": "disabled",
   "theme": "gentleman-kanagawa"
 }
