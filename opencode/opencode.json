@@ -741,7 +741,7 @@
   "permission": {
     "bash": {
       "*": "allow",
-      "git commit *": "ask",
+      "git commit *": "allow",
       "git push": "ask",
       "git push *": "ask",
       "git push --force *": "ask",
