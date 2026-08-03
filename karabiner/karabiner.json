@@ -1649,7 +1649,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle sticky"
+            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle opencode || open -a OpenCode"
           } ],
           "type" : "basic"
         }, {

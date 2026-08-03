@@ -113,5 +113,6 @@ yabai -m rule --add app="^Obsidian$" scratchpad="obsidian" grid=24:24:1:1:22:22
 yabai -m rule --add app="^Another Redis Desktop Manager$" scratchpad="redis" grid=12:12:1:1:10:10
 yabai -m rule --add app="^simulator$" scratchpad="Simulator" grid=12:12:1:1:10:10
 yabai -m rule --add app="^vocabsieve$" scratchpad="vocabsieve" grid=12:12:2:2:8:8
+yabai -m rule --add app="^OpenCode$" scratchpad="opencode" grid=12:12:0:0:12:12
 yabai -m rule --add app="^Shottr$" manage=off
 

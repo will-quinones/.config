@@ -217,9 +217,10 @@
            [:!F#Pa [:yabai "window --toggle anki || open -a Anki"] nil {:afterup [:yabai "window --focus mouse"]}]
            [:!F#Pv [:yabai "window --toggle obsidian || open -a Obsidian"]]
            [:!F#Py [:yabai "window --toggle simulator || open -a Simulator"]]
+           [:!F#Ps [:yabai "window --toggle opencode || open -a OpenCode"]]
 
            ;; ─────────────── Window state ───────────────
-           [:!F#Ps [:yabai "window --toggle sticky"]]
+        ;;    [:!F#Ps [:yabai "window --toggle sticky"]]
            [:!F#Pz [:yabai "window --raise"]]
            [:!F#Px [:yabai "window --minimize"]]
 
