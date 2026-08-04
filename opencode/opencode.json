@@ -23,6 +23,17 @@
     "chrome-devtools": {
       "type": "local",
       "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--autoConnect"]
+    },
+    "pencil": {
+      "command": [
+        "/Applications/Pen.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64",
+        "--app",
+        "desktop",
+        "--agent",
+        "openCodeCLI"
+      ],
+      "enabled": true,
+      "type": "local"
     }
   },
   "plugin": ["@warp-dot-dev/opencode-warp"],
@@ -32,6 +43,9 @@
       "git commit *": "allow",
       "git push *": "deny",
       "grep *": "allow"
+    },
+    "external_directory": {
+      "/Users/williamquinones/Documents/DEV/**": "allow"
     }
   },
   "share": "disabled"
