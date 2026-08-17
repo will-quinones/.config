@@ -4307,6 +4307,23 @@
             }
           },
           "to" : [ {
+            "key_code" : "b",
+            "modifiers" : [ "left_command" ]
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^dev\\.warp\\.Warp-Stable$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "b",
+            "modifiers" : {
+              "mandatory" : [ "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
             "key_code" : "l",
             "modifiers" : [ "left_command", "left_shift" ]
           } ],

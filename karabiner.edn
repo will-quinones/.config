@@ -418,6 +418,7 @@
            [:!F#Pb [:!Cb] :code]                 ;; covers VSCode + Windsurf (same bundle group)
            [:!F#Pb [:!CTs] :finder]
            [:!F#Pb [:!Cbackslash] :notion]
+           [:!F#Pb [:!Cb] :warp]
 
            [:!F#Pb [:!SCl] :obsidian]
            [:!SC#Pe [:!SCl ["obs_files" 0]]                     [:obsidian :obs_files]]    ;; on Files  -> close

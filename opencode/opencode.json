@@ -38,14 +38,29 @@
   },
   "plugin": ["@warp-dot-dev/opencode-warp"],
   "permission": {
+    "pencil_*": "deny",
     "bash": {
       "git *": "allow",
       "git commit *": "allow",
-      "git push *": "deny",
+      "git push *": "allow",
+      "git push * develop": "deny",
+      "git push * stage": "deny",
+      "git push * test": "deny",
+      "git push * *:develop": "deny",
+      "git push * *:stage": "deny",
+      "git push * *:test": "deny",
+      "git push * refs/heads/develop": "deny",
+      "git push * refs/heads/stage": "deny",
+      "git push * refs/heads/test": "deny",
+      "git push * *:refs/heads/develop": "deny",
+      "git push * *:refs/heads/stage": "deny",
+      "git push * *:refs/heads/test": "deny",
       "grep *": "allow"
     },
     "external_directory": {
-      "/Users/williamquinones/Documents/DEV/**": "allow"
+      "~/Documents/DEV/**": "allow",
+      "~/.config/opencode/agents/**": "allow",
+      "~/.config/opencode/**": "allow"
     }
   },
   "share": "disabled"
