@@ -1574,6 +1574,18 @@
             }
           },
           "to" : [ {
+            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle claude || open -a Claude"
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "c",
+            "modifiers" : {
+              "mandatory" : [ "left_command", "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
             "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle gpt || open -a ChatGPT"
           } ],
           "type" : "basic"
