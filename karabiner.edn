@@ -122,8 +122,7 @@
            [:hyphen {:mkey {:vwheel -40 :speed 2}} [:inf]]
            [:equal_sign {:mkey {:vwheel 40 :speed 2}} [:stats]]
            [:equal_sign {:mkey {:vwheel 40 :speed 2}} [:inf]]
-           ;; ── misc ──
-           [:delete_or_backspace :equal_sign :anki-layer]
+            ;; ── misc ──
            [:hyphen :d :anki-layer]
            [:equal_sign :s :anki-layer]
            [:#Pslash :r :anki-layer]
