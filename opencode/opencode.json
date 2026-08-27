@@ -60,7 +60,8 @@
     "external_directory": {
       "~/Documents/DEV/**": "allow",
       "~/.config/opencode/agents/**": "allow",
-      "~/.config/opencode/**": "allow"
+      "~/.config/opencode/**": "allow",
+      "/var/folders/yh/l267snw549x8dh_86zw72hwr0000gn/T/opencode/**": "allow"
     }
   },
   "share": "disabled"
