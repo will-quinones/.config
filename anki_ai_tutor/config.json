@@ -1,5 +1,5 @@
 {
-  "config_version": 10,
+  "config_version": 11,
   "provider": "codex",
   "api_base_url": "https://api.openai.com/v1/chat/completions",
   "api_key": "",
@@ -44,5 +44,11 @@
   "timeout_seconds": 120,
   "max_context_chars": 30000,
   "shortcut_open_config": "Ctrl+Alt+A",
-  "shortcut_save_result": "Ctrl+Alt+S"
+  "shortcut_save_result": "Ctrl+Alt+S",
+  "history_enabled": true,
+  "history_directory": "/Users/williamquinones/Documents/Documentos personales/Obsidian/Personal",
+  "history_subfolder": "Anki AI Tutor",
+  "history_capture": "saved",
+  "history_include_context": true,
+  "history_tag": "anki-ai-tutor"
 }
