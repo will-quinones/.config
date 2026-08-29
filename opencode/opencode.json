@@ -59,8 +59,11 @@
     },
     "external_directory": {
       "~/Documents/DEV/**": "allow",
+      "~/Downloads/Nueva carpeta con elementos */**": "allow",
+      "~/Downloads/Registro_bimestral_de_huespedes_*.xlsx": "allow",
       "~/.config/opencode/agents/**": "allow",
       "~/.config/opencode/**": "allow",
+      "/var/folders/yh/l267snw549x8dh_86zw72hwr0000gn/T/chrome-devtools-mcp-*/**": "allow",
       "/var/folders/yh/l267snw549x8dh_86zw72hwr0000gn/T/opencode/**": "allow"
     }
   },
