@@ -82,7 +82,7 @@
    :rules [[:fn :escape nil {:held :fn :params {:held 100}}]]}
 
   {:des "Shift deletes Forward and Backward"
-   :rules [[:#Pright_shift :right_shift nil {:alone :!OFdelete_or_backspace}]
+   :rules [[:#Pright_shift :right_shift :!anki {:alone :!OFdelete_or_backspace}]
            [:#Pleft_shift :left_shift nil {:alone :!Odelete_or_backspace}]]}
 
   ;; ════════════════════════════════ Anki ════════════════════════════════════
@@ -109,6 +109,8 @@
            [:right_control :!Cz :anki-layer]
            [:right_command :volume_decrement]
            [:right_control :volume_increment]
+           ;; ── right shift shortcut ──
+           [:right_shift :!OCs]
            [{:pkey :button1} :return_or_enter :anki-layer]
            [{:pkey :button2} :semicolon :anki-layer]
            ;; ── inf (definition) toggle ──

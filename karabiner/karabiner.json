@@ -160,6 +160,10 @@
           "to" : [ {
             "key_code" : "right_shift"
           } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_unless",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.launcher" ]
+          } ],
           "type" : "basic"
         }, {
           "to_if_alone" : [ {
@@ -514,6 +518,19 @@
           },
           "to" : [ {
             "consumer_key_code" : "volume_increment"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.launcher" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "right_shift"
+          },
+          "to" : [ {
+            "key_code" : "s",
+            "modifiers" : [ "left_command", "left_option" ]
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
