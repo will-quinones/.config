@@ -1,0 +1,5 @@
+# Local runtime artifacts and private profile mapping
+__pycache__/
+*.py[cod]
+/backups/
+/chrome/profiles.json
