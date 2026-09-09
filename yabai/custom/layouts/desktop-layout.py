@@ -212,17 +212,20 @@ def docker_engine_ready():
         return False
 
 
-def likely_docker_dialog(saved, live):
-    """Recognize a small Docker dialog without relying on localized titles."""
-    if not is_docker(live) or not eligible(live):
-        return False
-    old, new = saved.get('frame', {}), live.get('frame', {})
-    old_area = old.get('w', 0) * old.get('h', 0)
-    new_area = new.get('w', 0) * new.get('h', 0)
-    if not old_area or not new_area:
-        return False
-    ratio = new_area / old_area
-    return ratio < .40 or (ratio < .55 and digest(live.get('title')) != saved.get('title_digest'))
+def docker_window_role(window):
+    """Docker launches dashboard and error windows as explicitly named processes."""
+    pid = window.get('pid')
+    if type(pid) is not int or pid <= 0:
+        return None
+    try:
+        result = subprocess.run(['/bin/ps', '-p', str(pid), '-o', 'command='],
+                                capture_output=True, text=True, timeout=3)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode:
+        return None
+    found = re.search(r'(?:^|\s)--name=(dashboard|error-dialog)(?:\s|$)', result.stdout)
+    return found.group(1) if found else None
 
 
 def wait_docker_ready(saved, timeout_seconds):
@@ -232,9 +235,10 @@ def wait_docker_ready(saved, timeout_seconds):
     while time.monotonic() < deadline:
         live = with_bundles(list(e.windows().values()))
         docker_live = [w for w in live if is_docker(w)]
-        dialogs = [w for w in docker_live if likely_docker_dialog(saved, w)]
+        roles = {w['id']: docker_window_role(w) for w in docker_live}
+        dialogs = [w for w in docker_live if roles.get(w['id']) == 'error-dialog']
         dialog_samples = dialog_samples + 1 if dialogs else 0
-        main = [w for w in docker_live if eligible(w) and w not in dialogs]
+        main = [w for w in docker_live if eligible(w) and roles.get(w['id']) == 'dashboard']
         matches, _ = match([saved], main)
         if docker_engine_ready() and saved['id'] in matches:
             return dict(ready=True, warnings=[])

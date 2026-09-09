@@ -20,6 +20,7 @@ class DockerReadinessTests(unittest.TestCase):
         old = saved()
         with patch.object(m.e, 'windows', return_value={20: live()}), \
              patch.object(m, 'with_bundles', side_effect=lambda ws: ws), \
+             patch.object(m, 'docker_window_role', return_value='dashboard'), \
              patch.object(m, 'docker_engine_ready', return_value=False), \
              patch.object(m.time, 'monotonic', side_effect=[0, 0, 0, 2]), \
              patch.object(m.time, 'sleep'):
@@ -29,19 +30,22 @@ class DockerReadinessTests(unittest.TestCase):
 
     def test_ready_requires_engine_and_main_window(self):
         old = saved()
-        with patch.object(m.e, 'windows', return_value={20: live()}), \
+        dashboard = live('Volumes - Docker Desktop', 856, 1083)
+        with patch.object(m.e, 'windows', return_value={20: dashboard}), \
              patch.object(m, 'with_bundles', side_effect=lambda ws: ws), \
+             patch.object(m, 'docker_window_role', return_value='dashboard'), \
              patch.object(m, 'docker_engine_ready', return_value=True), \
              patch.object(m.time, 'monotonic', side_effect=[0, 0]):
             result = m.wait_docker_ready(old, 10)
         self.assertTrue(result['ready'])
 
-    def test_small_different_window_is_reported_without_restart(self):
+    def test_error_process_is_reported_without_restart(self):
         old = saved()
-        # Some Docker error dialogs expose the same AX title as the main window.
+        # Title and geometry are deliberately indistinguishable from normal content.
         dialog = live('Docker Desktop', 800, 450)
         with patch.object(m.e, 'windows', return_value={20: dialog}), \
              patch.object(m, 'with_bundles', side_effect=lambda ws: ws), \
+             patch.object(m, 'docker_window_role', return_value='error-dialog'), \
              patch.object(m, 'docker_engine_ready', return_value=False), \
              patch.object(m.time, 'monotonic', side_effect=[0, 0, 0, 1]), \
              patch.object(m.time, 'sleep'), \
@@ -50,6 +54,21 @@ class DockerReadinessTests(unittest.TestCase):
         self.assertFalse(result['ready'])
         self.assertIn('No se pulsó Reiniciar', result['warnings'][0])
         run.assert_not_called()
+
+    def test_process_role_uses_explicit_docker_name(self):
+        response = type('Result', (), {
+            'returncode': 0,
+            'stdout': '/Applications/Docker Desktop --reason=open-tray --name=dashboard\n'
+        })()
+        with patch.object(m.subprocess, 'run', return_value=response) as run:
+            self.assertEqual(m.docker_window_role(live()), 'dashboard')
+        self.assertEqual(run.call_args.args[0],
+                         ['/bin/ps', '-p', '30', '-o', 'command='])
+
+    def test_process_role_rejects_unnamed_docker_process(self):
+        response = type('Result', (), {'returncode': 0, 'stdout': '/Applications/Docker Desktop\n'})()
+        with patch.object(m.subprocess, 'run', return_value=response):
+            self.assertIsNone(m.docker_window_role(live()))
 
     def test_dependents_open_only_after_docker_ready(self):
         docker, dbeaver = saved(), saved('DBeaver Community', 2, 2, 'org.jkiss.dbeaver.core.product')
