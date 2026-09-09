@@ -116,3 +116,7 @@ yabai -m rule --add app="^vocabsieve$" scratchpad="vocabsieve" grid=12:12:2:2:8:
 yabai -m rule --add app="^OpenCode$" scratchpad="opencode" grid=12:12:0:0:12:12
 yabai -m rule --add app="^Claude$" scratchpad="claude" grid=12:12:0:0:12:12
 yabai -m rule --add app="^Shottr$" manage=off
+
+# Keep floating and tiled windows at the same stacking level.
+yabai -m rule --add label=native-stacking app=".*" sub-layer=normal
+yabai -m rule --apply native-stacking
