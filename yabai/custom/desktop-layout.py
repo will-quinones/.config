@@ -138,7 +138,7 @@ def capture(selected):
         return ws
     e.windows = filtered
     try:
-        state = e.capture(selected[0] if len(selected) == 1 else None)
+        state = e.capture(only_spaces=selected)
     finally:
         e.windows = original_windows
         e.restore_focus(initial_focus)
@@ -306,8 +306,7 @@ def execute_restore(state, document, report):
         for w in state['windows']:
             if e.windows()[w['id']]['space'] != w['space']:
                 e.win(w['id'], '--space', w['space'])
-        e.restore(state)
-        e.verify(state)
+        e.restore(state, verify_result=True)
     finally:
         e.restore_focus(state)
         e.cmd('-m', 'config', 'mouse_follows_focus', mouse)
@@ -358,7 +357,8 @@ def main():
             if args.action == 'restore-open':
                 opened = open_missing_apps(document, current, config, wait_seconds)
                 print(json.dumps(opened, indent=2, ensure_ascii=False), flush=True)
-                current, spaces, displays = inventory()
+                if opened['opened']:
+                    current, spaces, displays = inventory()
             available = {s['index'] for s in spaces}
             relevant = [s for s in document['state']['spaces'] if s['index'] in available]
             state, report = plan(document, current, spaces, displays, settings(relevant))

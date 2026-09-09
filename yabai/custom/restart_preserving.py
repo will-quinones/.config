@@ -145,14 +145,16 @@ def restore_focus(state):
     if state.get('focused_space'):
         show_space(state['focused_space'])
     focus=state.get('focus')
-    if focus and focus in windows():
-        try: win(focus,'--focus')
+    current=windows() if focus else {}
+    if focus and focus in current:
+        try:
+            if not current[focus].get('has-focus'): win(focus,'--focus')
         except RestoreError: pass
     elif state.get('focused_space'):
         show_space(state['focused_space'])
 
 
-def capture(only_space=None):
+def capture(only_space=None, only_spaces=None):
     spaces=query('spaces'); initial=windows()
     state={'version':1,'created':time.time(),'display_ids':[d['uuid'] for d in query('displays')],
            'visible_spaces':[s['index'] for s in spaces if s.get('is-visible')],
@@ -165,6 +167,7 @@ def capture(only_space=None):
         for space in spaces:
             if space.get('is-native-fullscreen') or not space['windows']: continue
             if only_space is not None and space['index'] != only_space: continue
+            if only_spaces is not None and space['index'] not in only_spaces: continue
             show_space(space['index'])
             # A visible Space has fresh AX geometry, unlike inactive Space queries.
             fresh=windows()
@@ -258,7 +261,7 @@ def build_tree(tree):
     build_tree(tree['left']); build_tree(tree['right'])
 
 
-def restore(state):
+def restore(state, verify_result=False):
     validate_identity(state, check_windows=False)
     mouse=cmd('-m','config','mouse_follows_focus')
     cmd('-m','config','mouse_follows_focus','off')
@@ -325,6 +328,8 @@ def restore(state):
                             win(w['id'],'--toggle',w['scratchpad'])
             finally:
                 cmd('-m','config','--space',index,'auto_balance',space['auto_balance'])
+            if verify_result:
+                verify_current_space(state, space)
     finally:
         restore_focus(state)
         cmd('-m','config','mouse_follows_focus',mouse)
@@ -337,26 +342,34 @@ def summary(state):
             'scratchpads':[w['scratchpad'] for w in state['windows'] if w.get('scratchpad')]}
 
 
-def verify(state):
-    validate_identity(state, check_windows=False)
+def verify_current_space(state, space):
+    """Verify while the restored Space is already visible; do not change focus."""
+    live=validate_identity(state, only_space=space['index'])
     failures=[]
-    try:
-        for s in state['spaces']:
-            show_space(s['index']); live=validate_identity(state, only_space=s['index'])
-            for w in state['windows']:
-                if w['space']!=s['index'] or w['is-minimized'] or w['is-hidden']: continue
-                now=live[w['id']]
-                for flag in ('has-fullscreen-zoom','has-parent-zoom','scratchpad'):
-                    if now.get(flag)!=w.get(flag): failures.append(f"{w['app']} {w['id']}: {flag}")
-                if (w['kind']=='tiled' or w['is-floating']) and not near(now['frame'],w['frame'],6):
-                    failures.append(f"{w['app']} {w['id']}: frame")
-            for g in leaves(s['tree']):
-                if len(g['ids'])>1:
-                    members=[live[i] for i in g['ids']]
-                    if not all(w.get('stack-index',0)>0 for w in members) or not all(near(members[0]['frame'],w['frame']) for w in members):
-                        failures.append(f"Stack {g['ids']}")
-    finally: restore_focus(state)
+    for w in state['windows']:
+        if w['space']!=space['index'] or w['is-minimized'] or w['is-hidden']: continue
+        now=live[w['id']]
+        for flag in ('has-fullscreen-zoom','has-parent-zoom','scratchpad'):
+            if now.get(flag)!=w.get(flag): failures.append(f"{w['app']} {w['id']}: {flag}")
+        if (w['kind']=='tiled' or w['is-floating']) and not near(now['frame'],w['frame'],6):
+            failures.append(f"{w['app']} {w['id']}: frame")
+    for g in leaves(space['tree']):
+        if len(g['ids'])>1:
+            members=[live[i] for i in g['ids']]
+            if not all(w.get('stack-index',0)>0 for w in members) or not all(near(members[0]['frame'],w['frame']) for w in members):
+                failures.append(f"Stack {g['ids']}")
     if failures: raise RestoreError('Restore differs from checkpoint: '+', '.join(failures))
+
+
+def verify(state):
+    # Standalone verification remains available for diagnostics/tests.
+    validate_identity(state, check_windows=False)
+    try:
+        for space in state['spaces']:
+            show_space(space['index'])
+            verify_current_space(state, space)
+    finally:
+        restore_focus(state)
 
 
 def main():
@@ -375,7 +388,7 @@ def main():
             if previous.get('phase') in ('restarting','restoring'):
                 raise RestoreError('An earlier restore is pending. Run restore first; checkpoint will not be overwritten.')
         if args.action=='restore':
-            state=json.loads(args.state.read_text()); restore(state); verify(state)
+            state=json.loads(args.state.read_text()); restore(state, verify_result=True)
             state['phase']='complete'; save(state,args.state)
         else:
             state=capture(); save(state,args.state)
@@ -385,7 +398,7 @@ def main():
                 cmd('--restart-service',timeout=45)
                 wait_ready()
                 state['phase']='restoring'; save(state,args.state)
-                restore(state); verify(state)
+                restore(state, verify_result=True)
                 state['phase']='complete'; save(state,args.state)
         print('OK: '+args.action,flush=True)
 
