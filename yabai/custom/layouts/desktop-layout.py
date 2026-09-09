@@ -2,7 +2,7 @@
 """Save and restore named yabai layouts across login/reboot.
 restore uses open windows only; restore-open also launches missing apps.
 No service restart, Space creation, or native fullscreen support.
-Uses app + title digest (never historical window IDs) for conservative matching.
+Uses bundle ID + title digest (never historical window IDs) for conservative matching.
 """
 import argparse
 import copy
@@ -19,10 +19,7 @@ import time
 from contextlib import ExitStack
 
 ROOT = Path(__file__).resolve().parent
-ENGINE = ROOT / 'restart_preserving.py'
-# Allows running staged tests without copying/changing the installed engine.
-if not ENGINE.exists():
-    ENGINE = Path.home() / '.config/yabai/custom/restart_preserving.py'
+ENGINE = ROOT.parent / 'restart' / 'restart_preserving.py'
 spec = importlib.util.spec_from_file_location('layout_engine', ENGINE)
 e = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(e)
@@ -78,12 +75,27 @@ def running_apps():
     return {x['pid']: x.get('bundle_id') for x in json.loads(result.stdout)}
 
 
+def same_app(saved, live):
+    # Prefer stable bundle IDs; legacy snapshots can still use the display name.
+    if saved.get('bundle_id') and live.get('bundle_id'):
+        return saved['bundle_id'] == live['bundle_id']
+    return saved['app'] == live['app']
+
+
+def with_bundles(windows):
+    try:
+        bundles = running_apps()
+    except (ERROR, OSError, ValueError, subprocess.TimeoutExpired):
+        bundles = {}
+    return [{**w, 'bundle_id': bundles.get(w['pid']) or w.get('bundle_id')} for w in windows]
+
+
 def open_missing_apps(document, current, config, wait_seconds):
     if document.get('format') != 1:
         raise ERROR('Formato de layout incompatible.')
     saved = document['state']['windows']
-    present = {w['app'] for w in current if eligible(w)}
-    missing = sorted({w['app'] for w in saved} - present)
+    missing = sorted({w['app'] for w in saved
+                      if not any(same_app(w, now) for now in current)})
     launched = []
     warnings = []
     # No shell interpolation, no -n (duplicate process), no -F (discard app state).
@@ -111,10 +123,10 @@ def open_missing_apps(document, current, config, wait_seconds):
         previous = None
         stable = 0
         while time.monotonic() < deadline:
-            live = list(e.windows().values())
+            live = with_bundles(list(e.windows().values()))
             matches, _ = match(saved, live)
             signature = tuple(sorted((w['id'], w['pid'], w['app'], digest(w.get('title')))
-                                     for w in live if eligible(w) and w['app'] in launched))
+                                     for w in live if eligible(w) and any(same_app(old, w) for old in saved if old['app'] in launched)))
             stable = stable + 1 if signature == previous else 0
             previous = signature
             needed = [w for w in saved if w['app'] in launched]
@@ -163,12 +175,15 @@ def capture(selected):
 
 
 def match(saved, current):
-    """Only unique title pairs, or a single saved/current window for the entire app."""
+    """Stable app identity, unique titles; never pair indistinguishable windows by order."""
     result = {}
     reasons = {}
-    for app in sorted({w['app'] for w in saved}):
-        old = [w for w in saved if w['app'] == app]
-        new = [w for w in current if w['app'] == app and eligible(w)]
+    groups = {}
+    for w in saved:
+        key = ('bundle', w['bundle_id']) if w.get('bundle_id') else ('name', w['app'])
+        groups.setdefault(key, []).append(w)
+    for old in groups.values():
+        new = [w for w in current if same_app(old[0], w) and eligible(w)]
         if len(old) == len(new) == 1:
             result[old[0]['id']] = new[0]
             continue
@@ -178,7 +193,18 @@ def match(saved, current):
             if len(peers) == len(candidates) == 1:
                 result[w['id']] = candidates[0]
             else:
-                reasons[w['id']] = app + (': no está abierta' if not new else ': título ausente o ambiguo')
+                excluded = [x for x in current if same_app(w, x) and not eligible(x)]
+                detail = ': ventana excluida (scratchpad, oculta o minimizada)' if excluded and not new else (
+                    ': no hay ventanas abiertas compatibles' if not new else
+                    f': {len(old)} guardadas, {len(new)} abiertas; título ausente o ambiguo')
+                reasons[w['id']] = w['app'] + detail
+    # Mixed legacy/new identities must never assign one live window twice.
+    for wid, live in list(result.items()):
+        if sum(x['id'] == live['id'] for x in result.values()) > 1:
+            ids = [i for i, x in result.items() if x['id'] == live['id']]
+            for i in ids:
+                reasons[i] = live['app'] + ': identidad de ventana duplicada'
+                del result[i]
     return result, reasons
 
 
@@ -236,7 +262,7 @@ def plan(document, current, spaces, displays, current_settings=None):
     state['windows'] = [w for w in state['windows'] if w['space'] in chosen]
     for w in state['windows']:
         live = matches[w['id']]
-        w.update(id=live['id'], pid=live['pid'], display=targets[w['space']]['display'])
+        w.update(id=live['id'], pid=live['pid'], app=live['app'], display=targets[w['space']]['display'])
     for s in state['spaces']:
         now = targets[s['index']]
         for k in ('id', 'uuid', 'display'):
@@ -269,22 +295,48 @@ def inventory():
     # Preserve original focus, not the last Space visited.
     for w in result.values():
         w['has-focus'] = w['id'] == initial['focus']
-    return list(result.values()), spaces, e.query('displays')
+    return with_bundles(list(result.values())), spaces, e.query('displays')
+
+
+def create_recovery():
+    # This raw journal requires no BSP inference and is explicitly NOT an engine checkpoint.
+    current, spaces, displays = inventory()
+    raw = dict(format='diagnostic-positions-v1', created=time.time(),
+               note='Posiciones de diagnóstico; no garantiza reconstrucción del árbol BSP anterior.',
+               windows=[{k: v for k, v in w.items() if k != 'title'} for w in current],
+               spaces=spaces, displays=displays)
+    e.save(raw, DATA / 'before-restore-positions.json')
+    try:
+        recovery = e.capture()
+    except ERROR as exc:
+        # Only geometric inference failures permit this documented fallback.
+        geometry_errors = ('BSP geometry cannot be reconstructed safely.',
+                           'Overlapping non-stack windows; cannot safely infer the BSP tree.',
+                           'Stack layout reports inconsistent frames.')
+        if str(exc) not in geometry_errors:
+            raise
+        e.save(dict(format='diagnostic-only', reason=str(exc),
+                    positions_file=str(DATA / 'before-restore-positions.json')),
+               DATA / 'before-restore.json')
+        print(json.dumps({'warnings': ['El mosaico actual no permite un respaldo completo; '
+                                     'se guardaron posiciones de diagnóstico. El layout original permanece intacto.']},
+                         ensure_ascii=False), flush=True)
+        return
+    recovery['phase'] = 'before-layout-restore'
+    e.save(recovery, DATA / 'before-restore.json')
 
 
 def execute_restore(state, document, report):
     if not state['windows']:
         raise ERROR('No hay escritorios completos y seguros que restaurar. Consulta preview.')
     # Recovery snapshot is separate from the named layout, which is never overwritten here.
-    recovery = e.capture()
-    recovery['phase'] = 'before-layout-restore'
-    e.save(recovery, DATA / 'before-restore.json')
+    create_recovery()
     current, current_spaces, current_displays = inventory()
     expected = {w['id']: w for w in state['windows']}
     for w in current:
         if w['id'] in expected:
             target = expected[w['id']]
-            if w['pid'] != target['pid'] or w['app'] != target['app'] or not eligible(w):
+            if w['pid'] != target['pid'] or not same_app(target, w) or not eligible(w):
                 raise ERROR('Cambió una ventana durante la preparación; vuelve a previsualizar.')
     if not set(expected).issubset({w['id'] for w in current}):
         raise ERROR('Una ventana desapareció durante la preparación.')

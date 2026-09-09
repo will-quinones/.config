@@ -8,8 +8,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parent
 TASKS = {
-    'restart': ('restart-preserving.sh', {'restart', 'restore', 'capture', 'inspect'}),
-    'layout': ('desktop-layout.sh', {'save', 'restore', 'restore-open', 'preview'}),
+    'restart': ('../restart/restart-preserving.sh', {'restart', 'restore', 'capture', 'inspect'}),
+    'layout': ('../layouts/desktop-layout.sh', {'save', 'restore', 'restore-open', 'preview'}),
 }
 
 

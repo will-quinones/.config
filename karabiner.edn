@@ -42,8 +42,8 @@
  ;; ─────────────────────────────── Templates ──────────────────────────────────
  :templates {:yabai      "/opt/homebrew/bin/yabai -m %s"
              :yabai-service "/opt/homebrew/bin/yabai %s"
-             :yabai-preserve "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py restart %s"
-             :yabai-layout "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py layout %s"
+             :yabai-preserve "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py restart %s"
+             :yabai-layout "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout %s"
              :launch-app "open -a '%s'"
              :close-app  "osascript -e 'quit app \"%s\"'"
              :open       "open -n '/Applications/%s.app'"
@@ -253,7 +253,7 @@
            ;; Layout persistente: guardar / restaurar solo ventanas abiertas
            [:!TOC#Pg [:yabai-layout "save"]]
            [:!TOC#Pl [:yabai-layout "restore"]]
-           [:!TOCS#Pl [:yabai-layout "restore-open"]]
+           [:!TOCR#Pl [:yabai-layout "restore-open"]]
            [:!TOC#Pr [:yabai-preserve "restart"]]
            ;; [:!TOC#Pp "yabai --restart-service"]
            [:!TOC#Pp "yabai --stop-service"]

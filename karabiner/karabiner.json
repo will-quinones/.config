@@ -1842,7 +1842,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py layout save"
+            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout save"
           } ],
           "type" : "basic"
         }, {
@@ -1854,19 +1854,19 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py layout restore"
+            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout restore"
           } ],
           "type" : "basic"
         }, {
           "from" : {
             "key_code" : "l",
             "modifiers" : {
-              "mandatory" : [ "left_command", "left_control", "left_option", "left_shift" ],
+              "mandatory" : [ "left_command", "left_control", "left_option", "right_shift" ],
               "optional" : [ "caps_lock" ]
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py layout restore-open"
+            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout restore-open"
           } ],
           "type" : "basic"
         }, {
@@ -1878,7 +1878,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py restart restart"
+            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py restart restart"
           } ],
           "type" : "basic"
         }, {
