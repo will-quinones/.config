@@ -55,7 +55,11 @@ def message(action, event, output=''):
         return title, body
     if action == 'save':
         summary = next((obj for obj in objects if 'saved' in obj), {})
-        return 'yabai · Layout guardado', f"{summary.get('windows', '?')} ventanas en {summary.get('spaces', '?')} escritorios. Listo para restaurar después."
+        body = f"{summary.get('windows', '?')} ventanas en {summary.get('spaces', '?')} escritorios."
+        if 'reopenable' in summary:
+            body += f" {summary['reopenable']} con proyecto/carpeta para reabrir."
+        if warnings: body += ' Algunas rutas no se identificaron; revisa run.log.'
+        return ('yabai · Guardado con avisos' if warnings else 'yabai · Layout guardado'), body
     if action == 'restart':
         return 'yabai · Reinicio completado', 'Servicio reiniciado y distribución de ventanas restaurada y verificada.'
     if action == 'recover':

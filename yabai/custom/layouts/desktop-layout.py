@@ -19,6 +19,8 @@ import time
 from contextlib import ExitStack
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+import adapters
 ENGINE = ROOT.parent / 'restart' / 'restart_preserving.py'
 spec = importlib.util.spec_from_file_location('layout_engine', ENGINE)
 e = importlib.util.module_from_spec(spec)
@@ -28,12 +30,49 @@ CONFIG = ROOT / 'desktop-layout.json'
 ERROR = e.RestoreError
 
 
+# Read-only WindowServer IDs distinguish closed Chrome entries cached by yabai.
+WINDOW_IDENTITIES = DATA / 'bin/window-identities'
+raw_engine_windows = e.windows
+
+
+def is_chrome(w):
+    return w.get('bundle_id') == 'com.google.Chrome' or w.get('app') in ('Chrome', 'Google Chrome')
+
+
+def is_chrome_picker(w):
+    return is_chrome(w) and w.get('title') in ("¿Quién usa Chrome?", "Who's using Chrome?")
+
+
+def filter_closed_chrome(windows, pairs):
+    return {i:w for i,w in windows.items() if not is_chrome(w) or (i,w['pid']) in pairs}
+
+
+def verified_windows():
+    windows = raw_engine_windows()
+    if not any(is_chrome(w) for w in windows.values()): return windows
+    proc = subprocess.run([str(WINDOW_IDENTITIES)], capture_output=True, text=True, timeout=5)
+    if proc.returncode: raise ERROR('No se pudo comprobar qué ventanas Chrome siguen abiertas.')
+    pairs = {tuple(x) for x in json.loads(proc.stdout)}
+    if not pairs: raise ERROR('macOS devolvió una lista de ventanas vacía; no se descartan ventanas a ciegas.')
+    return filter_closed_chrome(windows, pairs)
+
+
+e.windows = verified_windows
+
+
+def prepare_chrome_picker():
+    # Exact native picker titles only; real Chrome pages have an application/profile suffix.
+    for w in e.windows().values():
+        if is_chrome_picker(w) and not w.get('is-floating'):
+            e.set_float(w['id'], True)
+
+
 def digest(title):
     return hashlib.sha256((title or '').encode()).hexdigest()
 
 
 def eligible(w):
-    return (w.get('subrole') == 'AXStandardWindow'
+    return (not is_chrome_picker(w) and w.get('subrole') == 'AXStandardWindow'
             and w.get('has-ax-reference', True) and w.get('root-window', True)
             and not any(w.get(k) for k in ('is-minimized', 'is-hidden',
                         'is-native-fullscreen', 'is-sticky', 'scratchpad')))
@@ -100,6 +139,9 @@ def open_missing_apps(document, current, config, wait_seconds):
     warnings = []
     # No shell interpolation, no -n (duplicate process), no -F (discard app state).
     for app in missing:
+        if any(is_chrome(w) for w in saved if w['app'] == app):
+            warnings.append(app + ': apertura genérica desactivada; usa el adaptador del perfil guardado')
+            continue
         bundles = {w.get('bundle_id') for w in saved if w['app'] == app and w.get('bundle_id')}
         override = config.get('app_bundle_ids', {}).get(app)
         if len(bundles) > 1 and not override:
@@ -123,7 +165,7 @@ def open_missing_apps(document, current, config, wait_seconds):
         previous = None
         stable = 0
         while time.monotonic() < deadline:
-            live = with_bundles(list(e.windows().values()))
+            live, _ = adapters.annotate(with_bundles(list(e.windows().values())))
             matches, _ = match(saved, live)
             signature = tuple(sorted((w['id'], w['pid'], w['app'], digest(w.get('title')))
                                      for w in live if eligible(w) and any(same_app(old, w) for old in saved if old['app'] in launched)))
@@ -163,7 +205,12 @@ def capture(selected):
     except (ERROR, OSError, ValueError, subprocess.TimeoutExpired):
         bundles = {}
         print('AVISO: sin identificadores de app; restore-open intentará abrir por nombre.', file=sys.stderr)
+    described, source_warnings = adapters.annotate([{**w, 'bundle_id': bundles.get(w['pid'])} for w in observed.values()])
+    descriptors = {w['id']: w.get('reopen') for w in described}
     for w in state['windows']:
+        if descriptors.get(w['id']): w['reopen'] = descriptors[w['id']]
+        elif bundles.get(w['pid']) in ('com.microsoft.VSCode', 'com.google.Chrome'):
+            source_warnings.append(w['app'] + ': no se identificó un origen único para reabrir esta ventana')
         w['bundle_id'] = bundles.get(w['pid'])
         w['title_digest'] = digest(observed[w['id']].get('title'))
         if w['kind'] == 'free' and not w['is-floating']:
@@ -171,7 +218,7 @@ def capture(selected):
     occupied = {w['space'] for w in state['windows']}
     state['spaces'] = [s for s in state['spaces'] if s['index'] in occupied]
     return dict(format=1, state=state, displays=e.query('displays'),
-                settings=settings(state['spaces']))
+                settings=settings(state['spaces']), source_warnings=source_warnings)
 
 
 def match(saved, current):
@@ -182,8 +229,20 @@ def match(saved, current):
     for w in saved:
         key = ('bundle', w['bundle_id']) if w.get('bundle_id') else ('name', w['app'])
         groups.setdefault(key, []).append(w)
-    for old in groups.values():
-        new = [w for w in current if same_app(old[0], w) and eligible(w)]
+    for all_old in groups.values():
+        all_new = [w for w in current if same_app(all_old[0], w) and eligible(w)]
+        for w in [x for x in all_old if x.get('reopen')]:
+            source = adapters.key(w['reopen'])
+            peers = [x for x in all_old if adapters.key(x.get('reopen')) == source]
+            candidates = [x for x in all_new if source and adapters.key(x.get('reopen')) == source]
+            if len(peers) == len(candidates) == 1:
+                result[w['id']] = candidates[0]
+            else:
+                reasons[w['id']] = w['app'] + ': origen de ventana ausente, excluido o ambiguo'
+        old = [w for w in all_old if not w.get('reopen')]
+        if not old: continue
+        used = {w['id'] for w in result.values()}
+        new = [w for w in all_new if w['id'] not in used]
         if len(old) == len(new) == 1:
             result[old[0]['id']] = new[0]
             continue
@@ -278,24 +337,57 @@ def plan(document, current, spaces, displays, current_settings=None):
 
 
 def inventory():
+    # Metadata only: never activate Spaces here. Geometry is refreshed by
+    # the capture/restore engine while it visits and verifies each Space.
     spaces = e.query('spaces')
-    initial = focus_state(spaces, list(e.windows().values()))
-    result = {}
-    mouse = e.cmd('-m', 'config', 'mouse_follows_focus')
-    e.cmd('-m', 'config', 'mouse_follows_focus', 'off')
-    try:
-        for s in spaces:
-            if s.get('is-native-fullscreen') or not s['windows']:
-                continue
-            e.show_space(s['index'])
-            result.update({i: w for i, w in e.windows().items() if w['space'] == s['index']})
-    finally:
-        e.restore_focus(initial)
-        e.cmd('-m', 'config', 'mouse_follows_focus', mouse)
-    # Preserve original focus, not the last Space visited.
-    for w in result.values():
-        w['has-focus'] = w['id'] == initial['focus']
-    return with_bundles(list(result.values())), spaces, e.query('displays')
+    allowed = {s['index'] for s in spaces if not s.get('is-native-fullscreen')}
+    current = [dict(w) for w in e.windows().values() if w['space'] in allowed]
+    described, warnings = adapters.annotate(with_bundles(current))
+    if warnings: print(json.dumps({'warnings': warnings}, ensure_ascii=False), flush=True)
+    return described, spaces, e.query('displays')
+
+
+def reopen_windows(document, current, wait_seconds):
+    saved = document['state']['windows']
+    adapters.set_hints(saved)
+    opened = []
+    warnings = []
+    sources = {}
+    for w in saved:
+        source = adapters.key(w.get('reopen'))
+        if source: sources.setdefault(source, []).append(w)
+    for source, slots in sources.items():
+        app = slots[0]['app']
+        if len(slots) != 1:
+            warnings.append(app + ': varias ventanas guardadas del mismo proyecto/carpeta; no se duplican')
+            continue
+        # An excluded scratchpad/hidden window must not be duplicated to bypass its rules.
+        if any(same_app(slots[0], w) and adapters.key(w.get('reopen')) == source for w in current):
+            continue
+        # Chrome verifies existing content through its profile-specific API, not stale AX titles.
+        if source[0] != 'chrome-window' and any(same_app(slots[0], w) and eligible(w) and not w.get('reopen') for w in current):
+            warnings.append(app + ': hay ventanas sin ruta identificable; no se abren duplicados a ciegas')
+            continue
+        try:
+            adapters.launch(slots[0]['reopen'])
+            opened.append(app + ': ' + source[1])
+        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            warnings.append(app + ': ' + str(exc))
+    if opened:
+        deadline = time.monotonic() + wait_seconds
+        previous = None
+        stable = 0
+        while time.monotonic() < deadline:
+            current, _ = adapters.annotate(with_bundles(list(e.windows().values())))
+            matches, _ = match(saved, current)
+            signature = tuple(sorted((w['id'], w['pid'], str(adapters.key(w.get('reopen')))) for w in current if w.get('reopen')))
+            stable = stable + 1 if signature == previous else 0
+            previous = signature
+            if all(w['id'] in matches for w in saved if w.get('reopen')) and stable >= 2: break
+            time.sleep(min(.5, max(0, deadline-time.monotonic())))
+        else:
+            warnings.append('Algunos orígenes no produjeron una ventana identificable a tiempo.')
+    return dict(reopened_windows=opened, warnings=warnings)
 
 
 def create_recovery():
@@ -398,15 +490,21 @@ def main():
             if path.exists():
                 e.save(json.loads(path.read_text()), DATA / (name + '.previous.json'))
             e.save(document, path)
-            print(json.dumps(dict(saved=str(path), **e.summary(document['state'])), indent=2))
+            print(json.dumps(dict(saved=str(path), reopenable=sum(bool(w.get('reopen')) for w in document['state']['windows']), warnings=document.get('source_warnings', []), **e.summary(document['state'])), indent=2))
         else:
             if args.spaces:
                 raise ERROR('--spaces se usa solo con save; restore usa el layout guardado.')
             if not path.exists():
                 raise ERROR('No existe el layout '+name+'. Ejecuta save primero.')
             document = json.loads(path.read_text())
+            adapters.set_hints(document['state']['windows'])
+            if args.action in ('restore', 'restore-open'): prepare_chrome_picker()
             current, spaces, displays = inventory()
             if args.action == 'restore-open':
+                reopened = reopen_windows(document, current, wait_seconds)
+                print(json.dumps(reopened, ensure_ascii=False), flush=True)
+                if reopened['reopened_windows']:
+                    current, spaces, displays = inventory()
                 opened = open_missing_apps(document, current, config, wait_seconds)
                 print(json.dumps(opened, indent=2, ensure_ascii=False), flush=True)
                 if opened['opened']:

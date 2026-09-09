@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Yabai \u00b7 ventanas y grupos",
+  "version": "1.0.0",
+  "description": "Conecta tus atajos locales con pesta\u00f1as y grupos de Chrome. Sin acceso al contenido de p\u00e1ginas.",
+  "minimum_chrome_version": "110",
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage",
+    "nativeMessaging",
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Conectar con layouts de yabai"
+  },
+  "incognito": "not_allowed",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA01d9RdXsfxQvmRDkzsswomuHrKEh9bcbfOgEXAW0saj3q0nupqTorfKjAv7NwGQqcz90D6ZxELAKAL0IfXF5pnJKXXICgQdKhdj9RvNWBlPwTxDFv0RNCgC/NT53GGoWx3lwM7rUl5Hzksy5WfDMxjUpHkLl3k0jBxeHOev3JXDevJ3Y1RCxgwVznUc7KxQMEh4UIeZ6LDtPhear0n1DdLtoa3BFXV25ZdASiHCbNsU9Z0Igx3wu66n4Bt7ULWFuyEqWRg/WXEpcGxe7d7IqsgkWKM2hx/OKdlpurWoNxBLm62q1p5JQyWAEhBxccdML3mPYvd4dEGUx3af1zyPCNwIDAQAB"
+}
