@@ -42,7 +42,8 @@
  ;; ─────────────────────────────── Templates ──────────────────────────────────
  :templates {:yabai      "/opt/homebrew/bin/yabai -m %s"
              :yabai-service "/opt/homebrew/bin/yabai %s"
-             :yabai-preserve "/Users/williamquinones/.config/yabai/custom/restart-preserving.sh %s"
+             :yabai-preserve "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py restart %s"
+             :yabai-layout "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/background-task.py layout %s"
              :launch-app "open -a '%s'"
              :close-app  "osascript -e 'quit app \"%s\"'"
              :open       "open -n '/Applications/%s.app'"
@@ -214,8 +215,8 @@
            [:!F#Pq [:yabai "window --toggle whatsapp || open -a WhatsApp"]]
            [:!FC#Pq [:yabai "window --toggle slack || open -a Slack"]]
            [:!F#Pd [:yabai "window --toggle warp || open -a Warp"]]
-           [:!F#Pc [:yabai "window --toggle claude || open -a Claude"]]
-           [:!FC#Pc [:yabai "window --toggle gpt || open -a ChatGPT"]]
+           [:!FC#Pc [:yabai "window --toggle claude || open -a Claude"]]
+           [:!F#Pc [:yabai "window --toggle gpt || open -a ChatGPT"]]
            [:!F#Pg [:yabai "window --toggle gatherv2 || open -a GatherV2"]]
            [:!F#Pe [:yabai "window --toggle mail || open -a Mail"]]
            [:!F#Pa [:yabai "window --toggle anki || open -a Anki"] nil {:afterup [:yabai "window --focus mouse"]}]
@@ -249,6 +250,10 @@
            [:!E#Pa [:yabai "window --toggle zoom-fullscreen"]]
 
            ;; ─────────────── Start / stop yabai service ───────────────
+           ;; Layout persistente: guardar / restaurar solo ventanas abiertas
+           [:!TOC#Pg [:yabai-layout "save"]]
+           [:!TOC#Pl [:yabai-layout "restore"]]
+           [:!TOCS#Pl [:yabai-layout "restore-open"]]
            [:!TOC#Pr [:yabai-preserve "restart"]]
            ;; [:!TOC#Pp "yabai --restart-service"]
            [:!TOC#Pp "yabai --stop-service"]

@@ -224,7 +224,9 @@ def validate_identity(state, only_space=None, check_windows=True):
     for w in state['windows'] if check_windows else []:
         if only_space is not None and w['space']!=only_space: continue
         now=live.get(w['id'])
-        if not now or now['pid']!=w['pid'] or now['app']!=w['app']:
+        # App display names can change (DBeaver Community -> DBeaver).
+        # This checkpoint requires the same window ID and owning process ID.
+        if not now or now['id']!=w['id'] or now['pid']!=w['pid']:
             raise RestoreError(f"Window {w['id']} ({w['app']}) closed or changed; checkpoint kept.")
     return live
 
