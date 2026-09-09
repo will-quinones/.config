@@ -247,7 +247,7 @@
            [:!E#Pa [:yabai "window --toggle zoom-fullscreen"]]
 
            ;; ─────────────── Start / stop yabai service ───────────────
-           [:!TOC#Pr "pkill yabai"]
+           [:!TOC#Pr "/opt/homebrew/bin/yabai --restart-service"]
            ;; [:!TOC#Pp "yabai --restart-service"]
            [:!TOC#Pp "yabai --stop-service"]
            [:!TOC#Ps "yabai --start-service"]
