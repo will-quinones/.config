@@ -93,3 +93,13 @@ Después de actualizar `extension/worker.js`, recarga **Yabai · ventanas y grup
 El avance y los tiempos se escriben inmediatamente en `/Users/williamquinones/.local/state/yabai-desktop-layout/run.log`, aunque el wrapper aún esté esperando. Estos mensajes son del log; las notificaciones de escritorio continúan indicando inicio y resultado final.
 
 Pruebas sin mover ventanas: `python3 -m unittest discover -s layouts -p 'test*.py'`, `python3 -m unittest discover -s chrome/tests -p 'test*.py'` y `node --test chrome/tests/*.mjs`, desde `yabai/custom`. La prueba del puente crea un socket aislado. Para revertir esta mejora, restaura juntos el script de layouts, ambos adaptadores, su JSON y el worker de la copia previa; recarga la extensión después.
+
+## Aperturas lentas e incompletas
+
+El puente registra pasos y tiempos, sin URLs ni títulos, en `/Users/williamquinones/.local/state/yabai-desktop-layout/chrome-bridge.log`. Una restauración puede continuar más de 30 segundos **solo si informa progreso**; se detiene tras 30 segundos sin respuesta o al llegar al límite total de 120 segundos. El cliente espera hasta 130 segundos para recibir ese resultado. Esto no garantiza que Chrome termine: permite distinguir qué API queda esperando.
+
+Antes de crear una ventana se guarda una marca de apertura pendiente. Si se pierde la respuesta, no se crea otra a ciegas al reintentar. Una apertura incompleta requiere inspección; no se cierran ventanas automáticamente ni se borran sus marcas para forzar duplicados. La marca vive en la sesión de Chrome, no en el layout guardado.
+
+La revalidación de posiciones solo considera los escritorios incluidos en el plan original. Que aparezca una ventana identificable en un escritorio omitido no añade nuevos destinos; una ventana extra en un destino elegido sigue bloqueando su restauración.
+
+Recarga la extensión tras esta actualización. Las pruebas de protocolo y protección contra aperturas duplicadas no ejecutan una restauración sobre tus ventanas.

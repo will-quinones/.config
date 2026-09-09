@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -29,6 +30,7 @@ spec.loader.exec_module(e)
 DATA = Path.home() / '.local/state/yabai-desktop-layout'
 CONFIG = ROOT / 'desktop-layout.json'
 ERROR = e.RestoreError
+DOCKER_BUNDLE = 'com.electron.dockerdesktop'
 
 
 # Read-only WindowServer IDs distinguish closed Chrome entries cached by yabai.
@@ -38,6 +40,10 @@ raw_engine_windows = e.windows
 
 def is_chrome(w):
     return w.get('bundle_id') == 'com.google.Chrome' or w.get('app') in ('Chrome', 'Google Chrome')
+
+
+def is_docker(w):
+    return w.get('bundle_id') == DOCKER_BUNDLE or w.get('app') == 'Docker Desktop'
 
 
 def is_chrome_picker(w):
@@ -188,6 +194,89 @@ def open_missing_apps(document, current, config, wait_seconds, wait_ready=True):
     return dict(opened=launched, warnings=warnings)
 
 
+def docker_engine_ready():
+    """The GUI process can exist several minutes before the Docker API is usable."""
+    candidates = ['/usr/local/bin/docker', '/opt/homebrew/bin/docker']
+    discovered = shutil.which('docker')
+    if discovered:
+        candidates.append(discovered)
+    command = next((path for path in candidates if Path(path).is_file()), None)
+    if not command:
+        return False
+    try:
+        result = subprocess.run([command, 'info', '--format', '{{.ServerVersion}}'],
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL, timeout=4)
+        return result.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def likely_docker_dialog(saved, live):
+    """Recognize a small Docker dialog without relying on localized titles."""
+    if not is_docker(live) or not eligible(live):
+        return False
+    old, new = saved.get('frame', {}), live.get('frame', {})
+    old_area = old.get('w', 0) * old.get('h', 0)
+    new_area = new.get('w', 0) * new.get('h', 0)
+    if not old_area or not new_area:
+        return False
+    ratio = new_area / old_area
+    return ratio < .40 or (ratio < .55 and digest(live.get('title')) != saved.get('title_digest'))
+
+
+def wait_docker_ready(saved, timeout_seconds):
+    """Require both the backend and a plausible main window; never press Restart."""
+    deadline = time.monotonic() + timeout_seconds
+    dialog_samples = 0
+    while time.monotonic() < deadline:
+        live = with_bundles(list(e.windows().values()))
+        docker_live = [w for w in live if is_docker(w)]
+        dialogs = [w for w in docker_live if likely_docker_dialog(saved, w)]
+        dialog_samples = dialog_samples + 1 if dialogs else 0
+        main = [w for w in docker_live if eligible(w) and w not in dialogs]
+        matches, _ = match([saved], main)
+        if docker_engine_ready() and saved['id'] in matches:
+            return dict(ready=True, warnings=[])
+        if dialog_samples >= 2:
+            return dict(ready=False, warnings=[
+                'Docker Desktop mostró una ventana auxiliar o de error durante el arranque. '
+                'No se pulsó Reiniciar automáticamente: reinicia Docker manualmente y vuelve a ejecutar el atajo.'
+            ])
+        time.sleep(min(1, max(0, deadline-time.monotonic())))
+    return dict(ready=False, warnings=[
+        'Docker Desktop no terminó de iniciar a tiempo. Reinícialo manualmente y vuelve a ejecutar el atajo.'
+    ])
+
+
+def open_docker_workspace(document, current, config, wait_seconds):
+    """Open Docker first, then apps sharing its target Space, to avoid stray blockers."""
+    saved = document['state']['windows']
+    docker_saved = next(w for w in saved if is_docker(w))
+    target_spaces = {w['space'] for w in saved if is_docker(w)}
+    dependents = [w for w in saved if w['space'] in target_spaces and not is_docker(w)
+                  and not is_chrome(w) and not w.get('reopen')]
+    opened = []
+    warnings = []
+    if not any(is_docker(w) for w in current):
+        subset = {**document, 'state': {**document['state'], 'windows': [docker_saved]}}
+        result = open_missing_apps(subset, current, config, wait_seconds, wait_ready=False)
+        opened.extend(result.get('opened', []))
+        warnings.extend(result.get('warnings', []))
+    ready = wait_docker_ready(docker_saved, config.get('docker_wait_seconds', 75))
+    warnings.extend(ready['warnings'])
+    if not ready['ready']:
+        return dict(opened=opened, warnings=warnings,
+                    blocked_window_ids=[w['id'] for w in [docker_saved, *dependents]])
+    if dependents:
+        live = with_bundles(list(e.windows().values()))
+        subset = {**document, 'state': {**document['state'], 'windows': dependents}}
+        result = open_missing_apps(subset, live, config, wait_seconds, wait_ready=False)
+        opened.extend(result.get('opened', []))
+        warnings.extend(result.get('warnings', []))
+    return dict(opened=opened, warnings=warnings, blocked_window_ids=[])
+
+
 def capture(selected):
     # Filter before tree inference. Keep title digests from fresh visible-Space queries.
     original_windows = e.windows
@@ -274,7 +363,7 @@ def match(saved, current):
     return result, reasons
 
 
-def plan(document, current, spaces, displays, current_settings=None):
+def plan(document, current, spaces, displays, current_settings=None, allowed_spaces=None):
     if document.get('format') != 1:
         raise ERROR('Formato de layout incompatible.')
     original = document['state']
@@ -285,6 +374,7 @@ def plan(document, current, spaces, displays, current_settings=None):
     selected = []
     skipped = []
     for s in original['spaces']:
+        if allowed_spaces is not None and s['index'] not in allowed_spaces: continue
         index = s['index']
         ws = [w for w in original['windows'] if w['space'] == index]
         reason = None
@@ -434,12 +524,23 @@ def open_parallel(document, current, config, wait_seconds):
     limit = config.get('launch_concurrency', 3)
     if type(limit) is not int or not 1 <= limit <= 3:
         raise ERROR('launch_concurrency debe ser un entero entre 1 y 3.')
+    docker_wait = config.get('docker_wait_seconds', 75)
+    if type(docker_wait) is not int or not 5 <= docker_wait <= 300:
+        raise ERROR('docker_wait_seconds debe ser un entero entre 5 y 300.')
     saved = document['state']['windows']
     adapters.set_hints(saved)  # Immutable during worker execution.
     jobs = []
+    docker_spaces = {w['space'] for w in saved if is_docker(w)}
+    docker_workspace_apps = {w['app'] for w in saved
+                             if w['space'] in docker_spaces and not is_chrome(w)
+                             and not w.get('reopen')}
     missing = sorted({w['app'] for w in saved if not w.get('reopen') and not is_chrome(w)
                       and not any(same_app(w, other) and other.get('reopen') for other in saved)
+                      and w['app'] not in docker_workspace_apps
                       and not any(same_app(w, now) for now in current)})
+    if docker_spaces:
+        jobs.append(('Docker Desktop', lambda: open_docker_workspace(
+            document, current, config, wait_seconds)))
     for app in missing:
         subset = {**document, 'state':{**document['state'], 'windows':[w for w in saved if w['app']==app]}}
         jobs.append((app, lambda doc=subset: open_missing_apps(doc, current, config, wait_seconds, wait_ready=False)))
@@ -456,6 +557,9 @@ def open_parallel(document, current, config, wait_seconds):
     progress(f'Abriendo apps (máximo {limit} tareas simultáneas)', started)
     results = run_open_jobs(jobs, limit, progress)
     warnings = [message for result in results for message in result.get('warnings', [])]
+    blocked_window_ids = {wid for result in results
+                          for wid in result.get('blocked_window_ids', [])}
+    required = [w for w in saved if w['id'] not in blocked_window_ids]
     # One shared stabilization pass, not one deadline per app or window.
     deadline = time.monotonic() + wait_seconds
     previous = None
@@ -468,10 +572,11 @@ def open_parallel(document, current, config, wait_seconds):
         signature = tuple(sorted((w['id'], w['pid'], digest(w.get('title'))) for w in described if eligible(w)))
         stable = stable + 1 if signature == previous else 0
         previous = signature
-        if all(w['id'] in matches for w in saved) and stable >= 2:
+        if all(w['id'] in matches for w in required) and stable >= 2:
             break
         if time.monotonic()-last_progress >= 5:
-            progress(f'Identificando ventanas: {len(matches)}/{len(saved)}', started)
+            identified = sum(w['id'] in matches for w in required)
+            progress(f'Identificando ventanas: {identified}/{len(required)}', started)
             last_progress = time.monotonic()
         time.sleep(min(1, max(0, deadline-time.monotonic())))
     else:
@@ -528,8 +633,8 @@ def execute_restore(state, document, report):
     available = {s['index'] for s in current_spaces}
     relevant = [s for s in document['state']['spaces'] if s['index'] in available]
     _, fresh_report = plan(document, current, current_spaces, current_displays,
-                           settings(relevant))
-    if fresh_report != report:
+                           settings(relevant), allowed_spaces={s['index'] for s in state['spaces']})
+    if fresh_report['restore'] != report['restore'] or fresh_report['skipped']:
         raise ERROR('Cambió el plan durante la captura de seguridad; vuelve a intentarlo.')
     e.validate_identity(state)
     mouse = e.cmd('-m', 'config', 'mouse_follows_focus')

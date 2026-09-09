@@ -47,6 +47,16 @@ session.windows={};await request('snapshot');
 result=await request('snapshot',{hints:[source]});assert.equal(result.result[0].source.token,source.token);
 console.log('Extensión: reapertura, grupos, no foco, no duplicados, URLs seguras y cambio de IDs correctos');
 
+// Failure before windows.create returns cannot be blindly replayed.
+const realCreate=chrome.windows.create;
+let createAttempts=0;
+chrome.windows.create=async()=>{createAttempts++;throw Error('simulated create failure');};
+const uncertain={...source,token:'e'.repeat(32),tabs:[{url:'https://separate.example/test',pinned:false,group:-1}],groups:[],active:0};
+result=await request('restore',{source:uncertain});assert.equal(result.ok,false);
+result=await request('restore',{source:uncertain});assert.equal(result.ok,false);
+assert.equal(createAttempts,1);assert.equal(session.pendingRestores[uncertain.token],true);
+chrome.windows.create=realCreate;
+assert.ok(sent.some(m=>m.type==='progress' && m.stage==='windows.create:start'));
 // Reconnect promptly, back off repeated failures, reset only on host ready.
 const realTimeout=globalThis.setTimeout, realClear=globalThis.clearTimeout;
 let scheduled;

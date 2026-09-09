@@ -2,6 +2,8 @@
 """Chrome native host: one private Unix socket per browser profile, no shell execution."""
 import fcntl
 import json
+import os
+import re
 from pathlib import Path
 import select
 import socket
@@ -11,6 +13,41 @@ import uuid
 from bridge import address, pack, receive
 
 
+def diagnostic(stage, elapsed):
+    path = Path.home() / '.local/state/yabai-desktop-layout/chrome-bridge.log'
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with open(path, 'a') as log:
+        log.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] +{elapsed:.1f}s {stage}\n")
+
+
+def wait_response(incoming, ident, action, report=diagnostic):
+    """A progressing restore may exceed 30s; an idle step may not."""
+    started = time.monotonic()
+    total = started + (120 if action == 'restore' else 30)
+    idle = min(total, started + 30)
+    stage = 'request-sent'
+    report(action + ':' + stage, 0)
+    while True:
+        def read(size):
+            remaining = min(total, idle) - time.monotonic()
+            if remaining <= 0 or not select.select([incoming], [], [], remaining)[0]:
+                raise TimeoutError('Chrome sin respuesta en ' + stage + '; apertura no repetida')
+            return os.read(incoming.fileno(), size)
+        response = receive(read)
+        if response.get('id') != ident:
+            raise ValueError('Respuesta fuera de secuencia')
+        if response.get('type') == 'progress':
+            value = response.get('stage', '')
+            if not isinstance(value, str) or not re.fullmatch(r'[a-zA-Z0-9_.:-]{1,80}', value):
+                raise ValueError('Etapa Chrome inválida')
+            stage = value
+            report(action + ':' + stage, time.monotonic()-started)
+            idle = min(total, time.monotonic()+30)
+            continue
+        report(action + ':finished', time.monotonic()-started)
+        return response
+
+
 def main():
     manifest = json.loads((Path(__file__).parent.parent / 'extension/manifest.json').read_text())
     import base64, hashlib
@@ -18,7 +55,7 @@ def main():
     extension_id = ''.join(chr(ord('a') + int(c, 16)) for c in raw)
     if len(sys.argv) < 2 or sys.argv[1].rstrip('/') != 'chrome-extension://' + extension_id:
         raise ValueError('Origen no autorizado')
-    incoming = sys.stdin.buffer
+    incoming = sys.stdin.buffer.raw
     outgoing = sys.stdout.buffer
     hello = receive(incoming.read)
     if hello.get('type') != 'hello': raise ValueError('Falta saludo Chrome')
@@ -45,10 +82,7 @@ def main():
                                 raise ValueError('Acción no permitida')
                             ident = uuid.uuid4().hex
                             outgoing.write(pack({**command, 'type':'request','id':ident})); outgoing.flush()
-                            if not select.select([incoming], [], [], 30)[0]:
-                                raise TimeoutError('Chrome no respondió; no se reintentó la apertura')
-                            response = receive(incoming.read)
-                            if response.get('id') != ident: raise ValueError('Respuesta fuera de secuencia')
+                            response = wait_response(incoming, ident, command['action'])
                             client.sendall(pack(response))
                         except (OSError, ValueError, EOFError, TimeoutError) as exc:
                             try: client.sendall(pack({'ok':False, 'error':str(exc)}))

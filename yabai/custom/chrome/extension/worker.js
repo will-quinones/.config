@@ -104,9 +104,15 @@ async function snapshot(hints = []) {
   await chrome.storage.session.set({ windows: records });
   return output;
 }
-async function restore(source) {
+async function tracked(stage, promise, report) {
+  report(stage + ':start');
+  const value = await promise;
+  report(stage + ':done');
+  return value;
+}
+async function restore(source, report = () => {}) {
   validate(source, profile);
-  const current = await snapshot([source]);
+  const current = await tracked('snapshot', snapshot([source]), report);
   let existing = current.filter((w) => w.source.token === source.token);
   if (!existing.length)
     existing = current.filter((w) => signature(w.source) === signature(source));
@@ -126,12 +132,18 @@ async function restore(source) {
     throw Error(
       'Hay una ventana Chrome parcialmente coincidente; no se duplican sus pestañas',
     );
+  const pending = (await chrome.storage.session.get('pendingRestores')).pendingRestores || {};
+  if (pending[source.token])
+    throw Error('Apertura anterior sin confirmar; no se crea otra ventana');
+  // Persist intent BEFORE windows.create, whose response may never arrive.
+  pending[source.token] = true;
+  await chrome.storage.session.set({ pendingRestores: pending });
   // Never close or alter pre-existing windows. A failed new window remains for inspection.
-  const window = await chrome.windows.create({
+  const window = await tracked('windows.create', chrome.windows.create({
     url: 'about:blank',
     focused: false,
     type: 'normal',
-  });
+  }), report);
   const records = await registry();
   records[window.id] = { token: source.token, status: 'building' };
   await chrome.storage.session.set({ windows: records });
@@ -141,37 +153,37 @@ async function restore(source) {
       const t = source.tabs[i];
       const tab =
         i === 0
-          ? await chrome.tabs.update(window.tabs[0].id, {
+          ? await tracked('tabs.update', chrome.tabs.update(window.tabs[0].id, {
               url: t.url,
               pinned: t.pinned,
-            })
-          : await chrome.tabs.create({
+            }), report)
+          : await tracked('tabs.create', chrome.tabs.create({
               windowId: window.id,
               url: t.url,
               pinned: t.pinned,
               active: false,
               index: i,
-            });
+            }), report);
       ids.push(tab.id);
     }
     const groupIds = [];
     for (let i = 0; i < source.groups.length; i++) {
-      const id = await chrome.tabs.group({
+      const id = await tracked('tabs.group', chrome.tabs.group({
         createProperties: { windowId: window.id },
         tabIds: ids.filter((_, n) => source.tabs[n].group === i),
-      });
+      }), report);
       groupIds.push(id);
-      await chrome.tabGroups.update(id, {
+      await tracked('tabGroups.update', chrome.tabGroups.update(id, {
         title: source.groups[i].title,
         color: source.groups[i].color,
-      });
+      }), report);
     }
-    await chrome.tabs.update(ids[source.active], { active: true });
+    await tracked('tabs.update', chrome.tabs.update(ids[source.active], { active: true }), report);
     for (let i = 0; i < groupIds.length; i++)
-      await chrome.tabGroups.update(groupIds[i], {
+      await tracked('tabGroups.update', chrome.tabGroups.update(groupIds[i], {
         collapsed: source.groups[i].collapsed,
-      });
-    const actual = (await chrome.tabs.query({ windowId: window.id })).sort(
+      }), report);
+    const actual = (await tracked('tabs.query', chrome.tabs.query({ windowId: window.id }), report)).sort(
       (a, b) => a.index - b.index,
     );
     if (
@@ -187,6 +199,8 @@ async function restore(source) {
       throw Error('Chrome cambió el orden/grupos durante la apertura');
     records[window.id].status = 'complete';
     await chrome.storage.session.set({ windows: records });
+    delete pending[source.token];
+    await chrome.storage.session.set({ pendingRestores: pending });
     return { reused: false, window: window.id };
   } catch (error) {
     throw Error(
@@ -230,7 +244,9 @@ async function connect() {
           msg.action === 'snapshot'
             ? await snapshot(msg.hints || [])
             : msg.action === 'restore'
-              ? await restore(msg.source)
+              ? await restore(msg.source, (stage) => {
+                  try { activePort.postMessage({type:'progress', id:msg.id, stage}); } catch {}
+                })
               : (() => {
                   throw Error('Acción no permitida');
                 })();

@@ -58,7 +58,8 @@ def snapshot_probe(profile, hints, timeout=15):
         return bridge.request(profile, {'action':'snapshot', 'hints':hints}, timeout=timeout)
     except RuntimeError as exc:
         # The host returns its response timeout as a structured error.
-        if str(exc) == 'Chrome no respondió; no se reintentó la apertura':
+        if (str(exc) == 'Chrome no respondió; no se reintentó la apertura'
+                or str(exc).startswith('Chrome sin respuesta en ')):
             raise TimeoutError(str(exc)) from exc
         raise
 
@@ -129,7 +130,7 @@ def launch(source, readiness=None):
             await_profile(source)
             if readiness is not None: readiness[profile] = True
         # Never retry this mutation, including after an uncertain timeout.
-        return bridge.request(profile, {'action':'restore','source':source}, timeout=35)
+        return bridge.request(profile, {'action':'restore','source':source}, timeout=130)
     except (OSError, EOFError, RuntimeError) as exc:
         if readiness is not None: readiness[profile] = exc
         raise

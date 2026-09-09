@@ -2,6 +2,7 @@
   "name": "default",
   "spaces": "all",
   "launch_wait_seconds": 30,
+  "docker_wait_seconds": 75,
   "app_bundle_ids": {},
   "launch_concurrency": 3
 }
