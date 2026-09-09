@@ -7,8 +7,8 @@ delivery = "system"
 
 # Navigation sent by Karabiner while Warp is frontmost.
 [keys]
-previous_tab = ["prefix+p", "ctrl+alt+i"]
-next_tab = ["prefix+n", "ctrl+alt+o"]
-previous_workspace = "ctrl+alt+u"
-next_workspace = "ctrl+alt+p"
-last_pane = "ctrl+alt+n"
+previous_tab = ["prefix+p", "alt+shift+i"]
+next_tab = ["prefix+n", "alt+shift+o"]
+previous_workspace = "alt+shift+u"
+next_workspace = "alt+shift+y"
+last_pane = "alt+shift+n"

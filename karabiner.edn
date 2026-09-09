@@ -142,6 +142,17 @@
            [:right_control :right_control :!anki {:alone :!C#Popen_bracket}]
            [:keypad_3 :!C#Ptab]]}
 
+  ;; Fn navigation belongs to Herdr; Fn+Cmd keeps Warp tab navigation.
+  {:des "Herdr navigation in Warp"
+   :rules [:warp
+           [:!F#Pi :!OSi]
+           [:!F#Po :!OSo]
+           [:!F#Pu :!OSu]
+           [:!F#Pp :!OSy]
+           [:!F#Pn :!OSn]
+           [:!FC#Pi :!SCopen_bracket]
+           [:!FC#Po :!SCclose_bracket]]}
+
   {:des "Yabai keybinds"
    :rules [;; ─────────────── Navigation: focus spaces (SIP deactivated) ───────────────
            ;; SIP-activated variants (display --focus) kept for reference:
@@ -358,17 +369,6 @@
            [:!F#Po :!SOclose_bracket]
            [:!F#Pp :!OCright_arrow]
            [:!F#Pu :!OCleft_arrow]]}
-  ;; Fn navigation belongs to Herdr; Fn+Cmd keeps Warp tab navigation.
-  {:des "Herdr navigation in Warp"
-   :rules [:warp
-           [:!F#Pi :!TOi]
-           [:!F#Po :!TOo]
-           [:!F#Pu :!TOu]
-           [:!F#Pp :!TOp]
-           [:!F#Pn :!TOn]
-           [:!FC#Pi :!SCopen_bracket]
-           [:!FC#Po :!SCclose_bracket]]}
-
   {:des "Navigation Tabs"
    :rules [[:!F#Pi :!SCopen_bracket]
            [:!F#Po :!SCclose_bracket]]}
