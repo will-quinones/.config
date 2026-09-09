@@ -454,7 +454,6 @@ def reopen_windows(document, current, wait_seconds, wait_ready=True):
     opened = []
     warnings = []
     sources = {}
-    chrome_ready = {}
     for w in saved:
         source = adapters.key(w.get('reopen'))
         if source: sources.setdefault(source, []).append(w)
@@ -466,12 +465,13 @@ def reopen_windows(document, current, wait_seconds, wait_ready=True):
         # An excluded scratchpad/hidden window must not be duplicated to bypass its rules.
         if any(same_app(slots[0], w) and adapters.key(w.get('reopen')) == source for w in current):
             continue
-        # Chrome verifies existing content through its profile-specific API, not stale AX titles.
+        # Never duplicate an unidentified Code window. Chrome identities are
+        # handled by its local runtime map and unique temporary marker.
         if source[0] != 'chrome-window' and any(same_app(slots[0], w) and eligible(w) and not w.get('reopen') for w in current):
             warnings.append(app + ': hay ventanas sin ruta identificable; no se abren duplicados a ciegas')
             continue
         try:
-            adapters.launch(slots[0]['reopen'], chrome_ready=chrome_ready)
+            adapters.launch(slots[0]['reopen'])
             opened.append(app + ': ' + source[1])
         except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
             warnings.append(app + ': ' + str(exc))
@@ -524,7 +524,7 @@ def run_open_jobs(jobs, limit, report):
 
 
 def open_parallel(document, current, config, wait_seconds):
-    """Concurrent app starts; a single serial job owns each Chrome profile."""
+    """Up to three real window-opening jobs, with Docker dependencies isolated."""
     limit = config.get('launch_concurrency', 3)
     if type(limit) is not int or not 1 <= limit <= 3:
         raise ERROR('launch_concurrency debe ser un entero entre 1 y 3.')
@@ -534,6 +534,7 @@ def open_parallel(document, current, config, wait_seconds):
     saved = document['state']['windows']
     adapters.set_hints(saved)  # Immutable during worker execution.
     jobs = []
+    initial_results = []
     docker_spaces = {w['space'] for w in saved if is_docker(w)}
     docker_workspace_apps = {w['app'] for w in saved
                              if w['space'] in docker_spaces and not is_chrome(w)
@@ -548,18 +549,35 @@ def open_parallel(document, current, config, wait_seconds):
     for app in missing:
         subset = {**document, 'state':{**document['state'], 'windows':[w for w in saved if w['app']==app]}}
         jobs.append((app, lambda doc=subset: open_missing_apps(doc, current, config, wait_seconds, wait_ready=False)))
-    groups = {}
+    sources = {}
     for w in saved:
         source = adapters.key(w.get('reopen'))
-        if source:
-            group = ('Chrome', w['reopen']['profile']) if source[0]=='chrome-window' else ('Code', w['app'])
-            groups.setdefault(group, []).append(w)
-    for group, windows in groups.items():
-        subset = {**document, 'state':{**document['state'], 'windows':windows}}
-        jobs.append((group[0], lambda doc=subset: reopen_windows(doc, current, wait_seconds, wait_ready=False)))
+        if source: sources.setdefault(source, []).append(w)
+    saved_chrome = {source for source in sources if source[0] == 'chrome-window'}
+    extra_chrome = [w for w in current if is_chrome(w) and eligible(w)
+                    and adapters.key(w.get('reopen')) not in saved_chrome]
+    if extra_chrome:
+        initial_results.append({
+            'warnings':['Chrome: hay ventanas abiertas que no pertenecen al layout; no se crean otras a ciegas'],
+            'blocked_window_ids':[w['id'] for w in saved if is_chrome(w)],
+        })
+    for source, windows in sources.items():
+        app = windows[0]['app']
+        if len(windows) != 1:
+            initial_results.append({'warnings':[
+                app + ': varias ventanas guardadas del mismo proyecto/carpeta; no se duplican'
+            ]})
+            continue
+        if source[0] == 'chrome-window' and extra_chrome:
+            continue
+        window = windows[0]
+        subset = {**document, 'state':{**document['state'], 'windows':[window]}}
+        label = f"{app} · escritorio {window['space']}"
+        jobs.append((label, lambda doc=subset: reopen_windows(
+            doc, current, wait_seconds, wait_ready=False)))
     started = time.monotonic()
     progress(f'Abriendo apps (máximo {limit} tareas simultáneas)', started)
-    results = run_open_jobs(jobs, limit, progress)
+    results = initial_results + run_open_jobs(jobs, limit, progress)
     warnings = [message for result in results for message in result.get('warnings', [])]
     blocked_window_ids = {wid for result in results
                           for wid in result.get('blocked_window_ids', [])}
@@ -573,7 +591,10 @@ def open_parallel(document, current, config, wait_seconds):
     while time.monotonic() < deadline:
         described, notes = adapters.annotate(with_bundles(list(e.windows().values())))
         matches, _ = match(saved, described)
-        signature = tuple(sorted((w['id'], w['pid'], digest(w.get('title'))) for w in described if eligible(w)))
+        # Titles change while apps finish loading. Window identity and its
+        # adapter source are the stable signals needed for this wait.
+        signature = tuple(sorted((w['id'], w['pid'], str(adapters.key(w.get('reopen'))))
+                                 for w in described if eligible(w)))
         stable = stable + 1 if signature == previous else 0
         previous = signature
         if all(w['id'] in matches for w in required) and stable >= 2:
@@ -702,7 +723,7 @@ def main():
             document = json.loads(path.read_text())
             adapters.set_hints(document['state']['windows'])
             if args.action in ('restore', 'restore-open'): prepare_chrome_picker()
-            current, spaces, displays = inventory(include_chrome=args.action != 'restore-open')
+            current, spaces, displays = inventory()
             if args.action == 'restore-open':
                 opened = open_parallel(document, current, config, wait_seconds)
                 print(json.dumps(opened, ensure_ascii=False), flush=True)

@@ -14,6 +14,7 @@ def key(source):
 
 
 def set_hints(saved):
+    chrome.reset_cache()
     HINTS[:] = [w['reopen'] for w in saved if key(w.get('reopen'))]
 
 

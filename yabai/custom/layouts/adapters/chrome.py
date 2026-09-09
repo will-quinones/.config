@@ -1,136 +1,175 @@
-"""Chrome sources via the opt-in local extension. No activation or tab scraping."""
-import importlib.util
+"""Chrome window shells using the last-used local profile; no extension required."""
+import json
+import os
 from pathlib import Path
 import re
+import secrets
 import subprocess
+import threading
 import time
 
 BUNDLE = 'com.google.Chrome'
-NATIVE = Path(__file__).resolve().parents[2] / 'chrome/native/bridge.py'
-spec = importlib.util.spec_from_file_location('chrome_local_bridge', NATIVE)
-bridge = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(bridge)
+CHROME = Path('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
+YABAI = Path('/opt/homebrew/bin/yabai')
+LOCAL_STATE = Path.home() / 'Library/Application Support/Google/Chrome/Local State'
+STATE = Path.home() / '.local/state/yabai-desktop-layout'
 TOKEN = re.compile(r'[a-f0-9]{32}')
+MARKER = re.compile(r'YABAI_RESTORE_([a-f0-9]{32})')
+PROFILE = re.compile(r'Default|Profile [0-9]+')
+KNOWN = {}
+LOCK = threading.Lock()
+WINDOW_SECONDS = 45
 
 
 def key(source):
     if not isinstance(source, dict) or source.get('kind') != 'chrome-window': return None
-    if not all(isinstance(source.get(k), str) and TOKEN.fullmatch(source[k]) for k in ('profile','token')):
-        return None
-    return 'chrome-window', source['profile'] + ':' + source['token']
+    token = source.get('token')
+    if not isinstance(token, str) or not TOKEN.fullmatch(token): return None
+    # Old extension layouts remain compatible; profile UUID is intentionally ignored.
+    return 'chrome-window', token
 
 
-def title(value):
-    # Chrome's native AX title adds application/profile decorations.
-    return re.split(r" [–—-] Google Chrome(?: [–—-] |$)", (value or '').strip(), maxsplit=1)[0]
+def reset_cache():
+    KNOWN.clear()
 
 
-def title_matches(native, snapshot):
-    native, plain = title(native), title(snapshot.get('title'))
-    if not plain: return False
-    variants = {plain, plain + ': Error de red'}
-    for group in snapshot.get('source', {}).get('groups', []):
-        label = group.get('title')
-        if label:
-            decorated = plain + ': Parte del grupo ' + label
-            variants.update((decorated, decorated + ': Error de red'))
-    return native in variants
+def last_profile():
+    if not LOCAL_STATE.is_file():
+        raise ValueError('Chrome no tiene Local State; ábrelo una vez y vuelve a intentar')
+    data = json.loads(LOCAL_STATE.read_text())
+    directory = data.get('profile', {}).get('last_used')
+    if not isinstance(directory, str) or not PROFILE.fullmatch(directory):
+        raise ValueError('Chrome no informó un último perfil normal (Default/Profile N)')
+    return directory
 
 
-def pair(windows, snapshots):
-    # Bidirectional uniqueness; never infer ordering from changed native IDs.
-    candidates = {}
-    for w in windows:
-        matches = [s for s in snapshots if not s.get('unsupported') and title_matches(w.get('title'), s)]
-        if len(matches) > 1:
-            frame = w.get('frame', {})
-            matches = [s for s in matches if all(isinstance(frame.get(k), (int,float)) and
-                       isinstance(s.get('frame',{}).get(k), (int,float)) and
-                       abs(frame[k]-s['frame'][k]) <= 6 for k in ('x','y','w','h'))]
-        if len(matches) == 1 and not matches[0].get('incomplete'):
-            candidates[w['id']] = matches[0]['source']
-    return {wid:source for wid,source in candidates.items()
-            if sum(key(other)==key(source) for other in candidates.values()) == 1}
+def source_for(token, directory=None):
+    if not isinstance(token, str) or not TOKEN.fullmatch(token):
+        raise ValueError('Identificador Chrome inválido')
+    return {'kind':'chrome-window', 'token':token,
+            'profile_directory':directory or last_profile()}
 
 
-def snapshot_probe(profile, hints, timeout=15):
+def map_path():
+    return STATE / 'chrome-window-map.json'
+
+
+def marker_dir():
+    return STATE / 'chrome-markers'
+
+
+def read_map():
+    path = map_path()
+    if not path.is_file(): return []
     try:
-        return bridge.request(profile, {'action':'snapshot', 'hints':hints}, timeout=timeout)
-    except RuntimeError as exc:
-        # The host returns its response timeout as a structured error.
-        if (str(exc) == 'Chrome no respondió; no se reintentó la apertura'
-                or str(exc).startswith('Chrome sin respuesta en ')):
-            raise TimeoutError(str(exc)) from exc
-        raise
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return []
+    return data.get('windows', []) if isinstance(data, dict) else []
+
+
+def write_map(records):
+    STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path = map_path()
+    temporary = path.with_suffix('.tmp')
+    temporary.write_text(json.dumps({'format':1, 'windows':records}, separators=(',',':')))
+    temporary.chmod(0o600)
+    os.replace(temporary, path)
+
+
+def remember(window, source):
+    normalized = source_for(key(source)[1], source.get('profile_directory'))
+    cache_key = (window.get('pid'), window['id'])
+    with LOCK:
+        KNOWN[cache_key] = normalized
+        records = [r for r in read_map()
+                   if not (r.get('pid') == cache_key[0] and r.get('id') == cache_key[1])
+                   and r.get('token') != normalized['token']]
+        records.append({'pid':cache_key[0], 'id':cache_key[1], **normalized})
+        write_map(records)
+    return normalized
+
+
+def chrome_windows():
+    result = subprocess.run([str(YABAI), '-m', 'query', '--windows'],
+                            capture_output=True, text=True, timeout=5)
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or 'yabai no pudo consultar ventanas')
+    return [w for w in json.loads(result.stdout)
+            if w.get('app') in ('Chrome','Google Chrome')]
 
 
 def identify(windows, hints=()):
-    chrome = [w for w in windows if w.get('bundle_id') == BUNDLE or w.get('app') in ('Chrome','Google Chrome')]
-    if not chrome: return {}
-    snapshots=[]
-    connected=0
-    for profile in bridge.profiles():
-        try:
-            response = snapshot_probe(profile, [h for h in hints if key(h) and h['profile']==profile])
-            connected += 1
-            snapshots.extend(response)
-        except (OSError, EOFError): continue  # Old socket or browser not yet ready.
-    if not connected:
-        raise RuntimeError('Chrome: extensión local no conectada; no se guardarán/reabrirán grupos. Actívala en el perfil correcto.')
-    result = pair(chrome, snapshots)
-    # Missing/ambiguous windows get their own save warning; no destructive fallback.
-    config_path = NATIVE.parent.parent / 'profiles.json'
-    import json
-    mapping = json.loads(config_path.read_text()) if config_path.exists() else {}
-    for source in result.values():
-        directory = mapping.get(source['profile'])
-        if isinstance(directory, str) and re.fullmatch(r'Default|Profile [0-9]+', directory):
-            source['profile_directory'] = directory
-    return result
+    chrome = [w for w in windows
+              if w.get('bundle_id') == BUNDLE or w.get('app') in ('Chrome','Google Chrome')]
+    if not chrome:
+        with LOCK:
+            KNOWN.clear()
+            write_map([])
+        return {}
+    directory = last_profile()
+    hint_by_token = {key(h)[1]:h for h in hints if key(h)}
+    saved = {(r.get('pid'),r.get('id')):r for r in read_map()
+             if isinstance(r,dict) and key(r)}
+    output = {}
+    valid_records = []
+    for window in chrome:
+        cache_key = (window.get('pid'),window['id'])
+        found = MARKER.search(window.get('title',''))
+        if found:
+            token = found.group(1)
+            source = source_for(token, directory)
+        elif cache_key in KNOWN:
+            source = KNOWN[cache_key]
+        elif cache_key in saved:
+            source = source_for(saved[cache_key]['token'], directory)
+        else:
+            # A normal save can adopt any currently open Chrome window safely.
+            source = source_for(secrets.token_hex(16), directory)
+        if found and found.group(1) in hint_by_token:
+            source = source_for(found.group(1), directory)
+        KNOWN[cache_key] = source
+        output[window['id']] = source
+        valid_records.append({'pid':cache_key[0], 'id':cache_key[1], **source})
+    with LOCK:
+        write_map(valid_records)
+    return output
 
 
-# The native host reconnect alarm can take up to one minute after startup.
-READ_TIMEOUT = 15
-READY_SECONDS = 75
-
-
-def await_profile(source):
-    """Only read-only probes may be retried; never retry a restore mutation."""
-    profile = source['profile']
-    try:
-        snapshot_probe(profile, [source], timeout=READ_TIMEOUT)
-        return
-    except (OSError, EOFError):
-        pass
-    directory = source.get('profile_directory')
-    if not isinstance(directory, str) or not re.fullmatch(r'Default|Profile [0-9]+', directory):
-        raise RuntimeError('Falta el perfil Chrome guardado; abre el perfil correcto y guarda el layout')
-    subprocess.Popen(['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-                      '--profile-directory=' + directory, '--no-startup-window'],
-                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                     stderr=subprocess.DEVNULL, start_new_session=True)
-    deadline = time.monotonic() + READY_SECONDS
-    while time.monotonic() < deadline:
-        try:
-            snapshot_probe(profile, [source],
-                           timeout=min(READ_TIMEOUT, max(.1, deadline-time.monotonic())))
-            return
-        except (OSError, EOFError):
-            time.sleep(min(.5, max(0, deadline-time.monotonic())))
-    raise RuntimeError('El puente Chrome no se conectó tras 75 s; revisa la extensión en ' + directory)
+def marker_page(token):
+    directory = marker_dir()
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path = directory / (token + '.html')
+    # The unique title makes concurrent blank windows unambiguous to yabai.
+    path.write_text("""<!doctype html><meta charset=utf-8>
+<title>YABAI_RESTORE_%s</title>
+<style>html{background:#fff}@media(prefers-color-scheme:dark){html{background:#202124}}</style>
+<script>setTimeout(()=>location.replace('about:blank'),45000)</script>
+""" % token)
+    path.chmod(0o600)
+    return path
 
 
 def launch(source, readiness=None):
-    if not key(source): raise ValueError('Origen Chrome inválido')
-    profile = source['profile']
-    if readiness is not None and isinstance(readiness.get(profile), Exception):
-        raise RuntimeError('Perfil omitido tras un fallo previo: ' + str(readiness[profile]))
-    try:
-        if readiness is None or profile not in readiness:
-            await_profile(source)
-            if readiness is not None: readiness[profile] = True
-        # Never retry this mutation, including after an uncertain timeout.
-        return bridge.request(profile, {'action':'restore','source':source}, timeout=130)
-    except (OSError, EOFError, RuntimeError) as exc:
-        if readiness is not None: readiness[profile] = exc
-        raise
+    parsed = key(source)
+    if not parsed: raise ValueError('Origen Chrome inválido')
+    if not CHROME.is_file(): raise ValueError('No se encontró Google Chrome')
+    if not YABAI.is_file(): raise ValueError('No se encontró yabai')
+    token = parsed[1]
+    directory = last_profile()
+    marker = marker_page(token)
+    subprocess.Popen([str(CHROME), '--profile-directory=' + directory,
+                      '--new-window', '--no-first-run', '--disable-session-crashed-bubble',
+                      marker.as_uri()], stdin=subprocess.DEVNULL,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     start_new_session=True)
+    deadline = time.monotonic() + WINDOW_SECONDS
+    while time.monotonic() < deadline:
+        for window in chrome_windows():
+            found = MARKER.search(window.get('title',''))
+            if found and found.group(1) == token:
+                remember(window, source_for(token, directory))
+                marker.unlink(missing_ok=True)
+                return {'window':window['id'], 'profile_directory':directory}
+        time.sleep(min(.25, max(0, deadline-time.monotonic())))
+    raise RuntimeError('Chrome no mostró la ventana vacía a tiempo')

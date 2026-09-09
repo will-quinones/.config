@@ -20,21 +20,44 @@ class ParallelTests(unittest.TestCase):
   results=m.run_open_jobs([('bad',failed),('good',lambda:{'opened':['good']})],2,lambda *args:None)
   self.assertTrue(any(x.get('opened')==['good'] for x in results))
   self.assertTrue(any(x.get('warnings') for x in results))
- def test_groups_chrome_profile_serially_and_launches_generic_apps(self):
+ def test_chrome_windows_are_independent_jobs(self):
   src=lambda token:dict(kind='chrome-window',profile='a'*32,token=token*32)
   ws=[dict(id=1,app='Google Chrome',space=4,reopen=src('b')),dict(id=2,app='Google Chrome',space=10,reopen=src('c')),dict(id=3,app='Docker Desktop',space=2)]
   document={'format':1,'state':{'windows':ws}}
   def jobs(items, limit, report):
-   self.assertEqual(limit,3);self.assertEqual([x[0] for x in items],['Docker Desktop','Chrome'])
+   self.assertEqual(limit,3);self.assertEqual([x[0] for x in items],[
+    'Docker Desktop','Google Chrome · escritorio 4','Google Chrome · escritorio 10'])
    return [operation() for _,operation in items]
   with patch.object(m,'run_open_jobs',side_effect=jobs),patch.object(m,'progress'),patch.object(m,'open_docker_workspace',return_value={'opened':['Docker Desktop'],'blocked_window_ids':[]}),patch.object(m,'open_missing_apps') as generic,patch.object(m,'reopen_windows',return_value={'reopened_windows':['Chrome']}) as reopen,patch.object(m.e,'windows',return_value={}),patch.object(m,'with_bundles',return_value=[]),patch.object(m.adapters,'annotate',return_value=([],[])),patch.object(m,'match',return_value=({1:1,2:2,3:3},{})),patch.object(m.time,'sleep'):
    result=m.open_parallel(document,[],{},1)
    generic.assert_not_called()
    self.assertFalse(reopen.call_args.kwargs['wait_ready'])
-   self.assertEqual(len(reopen.call_args.args[0]['state']['windows']),2)
+   self.assertEqual(reopen.call_count,2)
+   self.assertTrue(all(len(call.args[0]['state']['windows'])==1 for call in reopen.call_args_list))
    self.assertEqual(result['opened'],['Docker Desktop'])
+ def test_code_windows_are_independent_jobs(self):
+  src=lambda path:dict(kind='code-folder',path=path)
+  ws=[dict(id=1,app='Code',space=1,reopen=src('/tmp/a')),dict(id=2,app='Code',space=7,reopen=src('/tmp/b'))]
+  document={'format':1,'state':{'windows':ws}}
+  seen=[]
+  def jobs(items, limit, report):
+   seen.extend(label for label,_ in items)
+   return [operation() for _,operation in items]
+  with patch.object(m,'run_open_jobs',side_effect=jobs),patch.object(m,'progress'),patch.object(m,'reopen_windows',return_value={'reopened_windows':['Code']}),patch.object(m.e,'windows',return_value={}),patch.object(m,'with_bundles',return_value=[]),patch.object(m.adapters,'annotate',return_value=([],[])),patch.object(m,'match',return_value=({1:1,2:2},{})),patch.object(m.time,'sleep'):
+   m.open_parallel(document,[],{},1)
+  self.assertEqual(seen,['Code · escritorio 1','Code · escritorio 7'])
  def test_progress_written_immediately(self):
   with tempfile.TemporaryDirectory() as tmp,patch.object(m,'DATA',Path(tmp)):
    m.progress('Esperando Chrome',time.monotonic())
    self.assertIn('Esperando Chrome',(Path(tmp)/'run.log').read_text())
+ def test_shared_wait_does_not_depend_on_dynamic_titles(self):
+  src=dict(kind='chrome-window',profile='a'*32,token='b'*32)
+  saved=[dict(id=1,pid=10,app='Google Chrome',space=4,reopen=src)]
+  document={'format':1,'state':{'windows':saved}}
+  samples=[[{**saved[0],'id':7,'title':title,'subrole':'AXStandardWindow','root-window':True}]
+           for title in ('Nueva pestaña','Cargando…','Marcadores')]
+  annotations=iter((sample,[]) for sample in samples)
+  with patch.object(m,'run_open_jobs',return_value=[{'reopened_windows':['Chrome']}]),patch.object(m,'progress'),patch.object(m.adapters,'annotate',side_effect=lambda *_a,**_k:next(annotations)),patch.object(m.e,'windows',return_value={}),patch.object(m,'with_bundles',return_value=[]),patch.object(m,'match',return_value=({1:{'id':7}},{})),patch.object(m.time,'sleep'):
+   result=m.open_parallel(document,[],{},10)
+  self.assertEqual(result['reopened_windows'],['Chrome'])
 if __name__=='__main__':unittest.main()
