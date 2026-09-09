@@ -1,0 +1,20 @@
+name = "Clínica · Admin"
+title = "Clinica Admin"
+
+[[panes]]
+id = "root"
+split = "horizontal"
+children = ["frontend", "backend"]
+
+[[panes]]
+id = "frontend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/admin/clinica-admin"
+commands = ["yarn dev"]
+is_focused = true
+
+[[panes]]
+id = "backend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/admin/clinica-admin-backend"
+commands = ["npm run start:dev"]

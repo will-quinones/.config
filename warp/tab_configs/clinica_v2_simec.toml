@@ -1,0 +1,20 @@
+name = "Clínica · Compuestos · V2 + Simec"
+title = "Clinica V2 + Simec"
+
+[[panes]]
+id = "root"
+split = "horizontal"
+children = ["v2", "simec"]
+
+[[panes]]
+id = "v2"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica-V2"
+commands = ["pnpm run dev"]
+is_focused = true
+
+[[panes]]
+id = "simec"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/SimecAPI"
+commands = ["npm run start:dev"]

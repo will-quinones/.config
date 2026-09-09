@@ -1,0 +1,31 @@
+name = "Clínica · Client"
+title = "Clinica Client"
+
+[[panes]]
+id = "root"
+split = "horizontal"
+children = ["backend", "services"]
+
+[[panes]]
+id = "frontend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/clinica"
+commands = ["npm run dev"]
+is_focused = true
+
+[[panes]]
+id = "services"
+split = "vertical"
+children = ["simec_api", "frontend"]
+
+[[panes]]
+id = "simec_api"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/SimecAPI"
+commands = ["npm run start:dev"]
+
+[[panes]]
+id = "backend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/clinica-backend"
+commands = ["npm run start:dev"]

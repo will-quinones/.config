@@ -1,0 +1,9 @@
+name = "Herramientas · ChartDB"
+title = "ChartDB"
+
+[[panes]]
+id = "chartdb"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Apps/chartdb"
+commands = ["npm run dev"]
+is_focused = true

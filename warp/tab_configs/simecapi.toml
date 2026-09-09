@@ -1,0 +1,9 @@
+name = "Servicios · SimecAPI"
+title = "SimecAPI"
+
+[[panes]]
+id = "simec_api"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/SimecAPI"
+commands = ["npm run start:dev"]
+is_focused = true

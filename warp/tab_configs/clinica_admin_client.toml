@@ -1,0 +1,53 @@
+name = "Clínica · Compuestos · Admin + Client"
+title = "Clinica Admin + Client"
+
+[[panes]]
+id = "root"
+split = "vertical"
+children = ["admin", "client"]
+
+[[panes]]
+id = "admin"
+split = "horizontal"
+children = ["admin_frontend", "admin_backend"]
+
+[[panes]]
+id = "admin_frontend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/admin/clinica-admin"
+commands = ["yarn dev"]
+is_focused = true
+
+[[panes]]
+id = "admin_backend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/admin/clinica-admin-backend"
+commands = ["npm run start:dev"]
+
+[[panes]]
+id = "client"
+split = "horizontal"
+children = ["client_frontend", "client_services"]
+
+[[panes]]
+id = "client_frontend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/clinica"
+commands = ["npm run dev"]
+
+[[panes]]
+id = "client_services"
+split = "vertical"
+children = ["simec_api", "client_backend"]
+
+[[panes]]
+id = "simec_api"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/SimecAPI"
+commands = ["npm run start:dev"]
+
+[[panes]]
+id = "client_backend"
+type = "terminal"
+directory = "/Users/williamquinones/Documents/DEV/Intership-Believe/Clinica/client/clinica-backend"
+commands = ["npm run start:dev"]

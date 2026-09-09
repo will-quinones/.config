@@ -1,0 +1,9 @@
+name = "Herramientas · Herdr"
+title = "Herdr"
+
+[[panes]]
+id = "herdr"
+type = "terminal"
+directory = "/Users/williamquinones"
+commands = ["herdr"]
+is_focused = true
