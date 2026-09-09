@@ -28,9 +28,9 @@ yabai -m config window_origin_display cursor
 
 
 
-@REM yabai -m config window_opacity on
-@REM yabai -m config active_window_opacity 1.0
-@REM yabai -m config normal_window_opacity 0.9
+# yabai -m config window_opacity on
+# yabai -m config active_window_opacity 1.0
+# yabai -m config normal_window_opacity 0.9
 
 
 # mouse settings
@@ -69,7 +69,7 @@ yabai -m rule --add app="^Configuración de Audio MIDI$" manage=off
 yabai -m rule --add app="^Vista Previa$" manage=off
 yabai -m rule --add app="^Mapas$" manage=off
 yabai -m rule --add app="^Time Machine$" manage=off
-@REM yabai -m rule --add label="Finder" app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=off
+# yabai -m rule --add label="Finder" app="^Finder$" title="(Co(py|nnect)|Move|Info|Pref)" manage=off
 yabai -m rule --add label="Configuración del Sistema" app="^Configuración del Sistema$" title=".*" manage=off
 yabai -m rule --add label="DBeaver" app="DBeaver" title!="DBeaver .*" manage=off
 yabai -m rule --add label="TablePlus" app="TablePlus" manage=off
@@ -119,4 +119,5 @@ yabai -m rule --add app="^Shottr$" manage=off
 
 # Keep floating and tiled windows at the same stacking level.
 yabai -m rule --add label=native-stacking app=".*" sub-layer=normal
-yabai -m rule --apply native-stacking
+# Restore scratchpad assignments and other rules on existing windows.
+yabai -m rule --apply
