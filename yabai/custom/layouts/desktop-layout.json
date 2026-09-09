@@ -2,5 +2,6 @@
   "name": "default",
   "spaces": "all",
   "launch_wait_seconds": 30,
-  "app_bundle_ids": {}
+  "app_bundle_ids": {},
+  "launch_concurrency": 3
 }

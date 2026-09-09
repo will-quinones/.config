@@ -17,11 +17,12 @@ def set_hints(saved):
     HINTS[:] = [w['reopen'] for w in saved if key(w.get('reopen'))]
 
 
-def annotate(windows):
+def annotate(windows, include_chrome=True):
     result = [dict(w) for w in windows]
     warnings = []
     descriptors = {}
     for module in MODULES:
+        if module is chrome and not include_chrome: continue
         try: descriptors.update(module.identify(result, HINTS))
         except (OSError, ValueError, RuntimeError, __import__('subprocess').TimeoutExpired) as exc:
             warnings.append(str(exc))
@@ -30,10 +31,10 @@ def annotate(windows):
     return result, warnings
 
 
-def launch(source):
+def launch(source, chrome_ready=None):
     k = key(source)
     if not k: raise ValueError('Origen de ventana inválido')
-    if k[0] == 'chrome-window': return chrome.launch(source)
+    if k[0] == 'chrome-window': return chrome.launch(source, readiness=chrome_ready)
     normalized = dict(kind=k[0], path=k[1])
     if k[0].startswith('code-'): return vscode.launch(normalized)
     raise ValueError('Origen no admitido')

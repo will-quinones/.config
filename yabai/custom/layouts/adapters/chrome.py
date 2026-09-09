@@ -53,6 +53,16 @@ def pair(windows, snapshots):
             if sum(key(other)==key(source) for other in candidates.values()) == 1}
 
 
+def snapshot_probe(profile, hints, timeout=15):
+    try:
+        return bridge.request(profile, {'action':'snapshot', 'hints':hints}, timeout=timeout)
+    except RuntimeError as exc:
+        # The host returns its response timeout as a structured error.
+        if str(exc) == 'Chrome no respondió; no se reintentó la apertura':
+            raise TimeoutError(str(exc)) from exc
+        raise
+
+
 def identify(windows, hints=()):
     chrome = [w for w in windows if w.get('bundle_id') == BUNDLE or w.get('app') in ('Chrome','Google Chrome')]
     if not chrome: return {}
@@ -60,7 +70,7 @@ def identify(windows, hints=()):
     connected=0
     for profile in bridge.profiles():
         try:
-            response = bridge.request(profile, {'action':'snapshot', 'hints':[h for h in hints if key(h) and h['profile']==profile]}, timeout=5)
+            response = snapshot_probe(profile, [h for h in hints if key(h) and h['profile']==profile])
             connected += 1
             snapshots.extend(response)
         except (OSError, EOFError): continue  # Old socket or browser not yet ready.
@@ -78,29 +88,48 @@ def identify(windows, hints=()):
     return result
 
 
-def launch(source):
-    if not key(source): raise ValueError('Origen Chrome inválido')
-    # Distinguish disconnected bridge from a failed mutation; never retry a restore.
-    profile=source['profile']
+# The native host reconnect alarm can take up to one minute after startup.
+READ_TIMEOUT = 15
+READY_SECONDS = 75
+
+
+def await_profile(source):
+    """Only read-only probes may be retried; never retry a restore mutation."""
+    profile = source['profile']
     try:
-        bridge.request(profile, {'action':'snapshot','hints':[source]}, timeout=5)
+        snapshot_probe(profile, [source], timeout=READ_TIMEOUT)
+        return
     except (OSError, EOFError):
-        directory = source.get('profile_directory')
-        if isinstance(directory, str) and re.fullmatch(r'Default|Profile [0-9]+', directory):
-            # Chrome forwards profile selection to an existing browser process as well.
-            subprocess.Popen(['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-                              '--profile-directory=' + directory, '--no-startup-window'],
-                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, start_new_session=True)
-        else:
-            raise RuntimeError('Falta el perfil Chrome guardado; abre Trabajo y guarda el layout antes de usar restore-open')
-        deadline=time.monotonic()+30
-        while True:
-            try:
-                bridge.request(profile, {'action':'snapshot','hints':[source]}, timeout=3)
-                break
-            except (OSError, EOFError):
-                if time.monotonic() >= deadline:
-                    raise RuntimeError('Activa la extensión y abre el perfil Chrome donde guardaste el layout')
-                time.sleep(.5)
-    return bridge.request(profile, {'action':'restore','source':source}, timeout=35)
+        pass
+    directory = source.get('profile_directory')
+    if not isinstance(directory, str) or not re.fullmatch(r'Default|Profile [0-9]+', directory):
+        raise RuntimeError('Falta el perfil Chrome guardado; abre el perfil correcto y guarda el layout')
+    subprocess.Popen(['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                      '--profile-directory=' + directory, '--no-startup-window'],
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL, start_new_session=True)
+    deadline = time.monotonic() + READY_SECONDS
+    while time.monotonic() < deadline:
+        try:
+            snapshot_probe(profile, [source],
+                           timeout=min(READ_TIMEOUT, max(.1, deadline-time.monotonic())))
+            return
+        except (OSError, EOFError):
+            time.sleep(min(.5, max(0, deadline-time.monotonic())))
+    raise RuntimeError('El puente Chrome no se conectó tras 75 s; revisa la extensión en ' + directory)
+
+
+def launch(source, readiness=None):
+    if not key(source): raise ValueError('Origen Chrome inválido')
+    profile = source['profile']
+    if readiness is not None and isinstance(readiness.get(profile), Exception):
+        raise RuntimeError('Perfil omitido tras un fallo previo: ' + str(readiness[profile]))
+    try:
+        if readiness is None or profile not in readiness:
+            await_profile(source)
+            if readiness is not None: readiness[profile] = True
+        # Never retry this mutation, including after an uncertain timeout.
+        return bridge.request(profile, {'action':'restore','source':source}, timeout=35)
+    except (OSError, EOFError, RuntimeError) as exc:
+        if readiness is not None: readiness[profile] = exc
+        raise

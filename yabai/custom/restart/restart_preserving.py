@@ -261,6 +261,31 @@ def build_tree(tree):
     build_tree(tree['left']); build_tree(tree['right'])
 
 
+def restore_float_frame(saved, attempts=15):
+    """Bounded settling for asynchronous AX/Qt resizing; never hide a mismatch."""
+    target = saved['frame']
+    stable = 0
+    last = None
+    for attempt in range(attempts):
+        now = windows().get(saved['id'])
+        if (not now or now['pid'] != saved['pid'] or now['space'] != saved['space']
+                or not now.get('is-floating') or now.get('is-minimized') or now.get('is-hidden')):
+            raise RestoreError('Floating window changed during resize; restore stopped.')
+        last = now['frame']
+        if near(last, target, 6):
+            stable += 1
+            if stable >= 2:
+                return
+        else:
+            stable = 0
+            # Position first: resizing at an old screen edge can be constrained.
+            win(saved['id'], '--move', f"abs:{round(target['x'])}:{round(target['y'])}")
+            win(saved['id'], '--resize', f"abs:{round(target['w'])}:{round(target['h'])}")
+        time.sleep(.2)
+    raise RestoreError(f"{saved['app']} {saved['id']}: frame did not settle; "
+                       f"expected={target}, actual={last}")
+
+
 def restore(state, verify_result=False):
     validate_identity(state, check_windows=False)
     mouse=cmd('-m','config','mouse_follows_focus')
@@ -313,9 +338,7 @@ def restore(state, verify_result=False):
                             win(group['ids'][0],'--stack',wid)
                 for w in active:
                     if w['kind']=='free' and w['is-floating']:
-                        f=w['frame']
-                        win(w['id'],'--resize',f"abs:{round(f['w'])}:{round(f['h'])}")
-                        win(w['id'],'--move',f"abs:{round(f['x'])}:{round(f['y'])}")
+                        restore_float_frame(w)
                     if w.get('sub-layer') in ('normal','above','below'):
                         win(w['id'],'--sub-layer',w['sub-layer'])
                 for w in active:

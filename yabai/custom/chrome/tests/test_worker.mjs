@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 if (!globalThis.crypto) globalThis.crypto=webcrypto;
 const profile='a'.repeat(32),local={profile},session={};
-let listener, sent=[], winId=0,tabId=0,groupId=0,windows=[],groups=[],calls=[];
+let disconnect, sentAlarms=[], listener, sent=[], winId=0,tabId=0,groupId=0,windows=[],groups=[],calls=[];
 const event=()=>({addListener(){}});
 function area(data){return {async get(k){return {[k]:data[k]};},async set(v){Object.assign(data,structuredClone(v));}};}
 function tab(id){return windows.flatMap(w=>w.tabs).find(t=>t.id===id);}
 globalThis.chrome={
  storage:{local:area(local),session:area(session)},
- runtime:{onStartup:event(),onInstalled:event(),connectNative(){return {postMessage(m){sent.push(m);},onDisconnect:event(),onMessage:{addListener(fn){listener=fn;}}};}},
- action:{onClicked:event(),async setBadgeText(){},async setTitle(){}},alarms:{onAlarm:event(),create(){}},
+ runtime:{onStartup:event(),onInstalled:event(),connectNative(){return {postMessage(m){sent.push(m);},onDisconnect:{addListener(fn){disconnect=fn;}},onMessage:{addListener(fn){listener=fn;}}};}},
+ action:{onClicked:event(),async setBadgeText(){},async setTitle(){}},alarms:{onAlarm:event(),create(name,options){sentAlarms.push([name,options]);}},
  windows:{async getAll(){return structuredClone(windows);},async create(options){
   calls.push(['createWindow',options]);const w={id:++winId,incognito:false,left:0,top:0,width:100,height:100,
    tabs:[{id:++tabId,index:0,url:'about:blank',title:'blank',pinned:false,active:true,groupId:-1}]};windows.push(w);return structuredClone(w);}},
@@ -46,3 +46,19 @@ result=await request('snapshot',{hints:[source]});assert.equal(result.result[0].
 session.windows={};await request('snapshot');
 result=await request('snapshot',{hints:[source]});assert.equal(result.result[0].source.token,source.token);
 console.log('Extensión: reapertura, grupos, no foco, no duplicados, URLs seguras y cambio de IDs correctos');
+
+// Reconnect promptly, back off repeated failures, reset only on host ready.
+const realTimeout=globalThis.setTimeout, realClear=globalThis.clearTimeout;
+let scheduled;
+try {
+ globalThis.setTimeout=(fn,delay)=>{scheduled={fn,delay};return 123;};
+ globalThis.clearTimeout=()=>{};
+ disconnect();assert.equal(scheduled.delay,1000);
+ assert.equal(sentAlarms.at(-1)[1].delayInMinutes,.5);
+ scheduled.fn();await new Promise(r=>realTimeout(r,0));
+ disconnect();assert.equal(scheduled.delay,2000);
+ scheduled.fn();await new Promise(r=>realTimeout(r,0));
+ await listener({type:'ready'});
+ disconnect();assert.equal(scheduled.delay,1000);
+ console.log('Reconexión rápida, backoff y reinicio tras ready correctos');
+} finally {globalThis.setTimeout=realTimeout;globalThis.clearTimeout=realClear;}

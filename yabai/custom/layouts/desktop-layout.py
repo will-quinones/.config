@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 from contextlib import ExitStack
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -71,8 +72,14 @@ def digest(title):
     return hashlib.sha256((title or '').encode()).hexdigest()
 
 
+def is_auxiliary(w):
+    # DBeaver reports this startup dialog as AXStandardWindow/root-window.
+    return (w.get('app') == 'DBeaver Community' and
+            w.get('title', '').strip() in ('Tip of the day', 'Consejo del día'))
+
+
 def eligible(w):
-    return (not is_chrome_picker(w) and w.get('subrole') == 'AXStandardWindow'
+    return (not is_auxiliary(w) and not is_chrome_picker(w) and w.get('subrole') == 'AXStandardWindow'
             and w.get('has-ax-reference', True) and w.get('root-window', True)
             and not any(w.get(k) for k in ('is-minimized', 'is-hidden',
                         'is-native-fullscreen', 'is-sticky', 'scratchpad')))
@@ -129,7 +136,7 @@ def with_bundles(windows):
     return [{**w, 'bundle_id': bundles.get(w['pid']) or w.get('bundle_id')} for w in windows]
 
 
-def open_missing_apps(document, current, config, wait_seconds):
+def open_missing_apps(document, current, config, wait_seconds, wait_ready=True):
     if document.get('format') != 1:
         raise ERROR('Formato de layout incompatible.')
     saved = document['state']['windows']
@@ -160,7 +167,7 @@ def open_missing_apps(document, current, config, wait_seconds):
                 launched.append(app)
         except (OSError, subprocess.TimeoutExpired) as exc:
             warnings.append(app + ': ' + str(exc))
-    if launched:
+    if launched and wait_ready:
         deadline = time.monotonic() + wait_seconds
         previous = None
         stable = 0
@@ -336,23 +343,24 @@ def plan(document, current, spaces, displays, current_settings=None):
     return state, report
 
 
-def inventory():
+def inventory(include_chrome=True):
     # Metadata only: never activate Spaces here. Geometry is refreshed by
     # the capture/restore engine while it visits and verifies each Space.
     spaces = e.query('spaces')
     allowed = {s['index'] for s in spaces if not s.get('is-native-fullscreen')}
     current = [dict(w) for w in e.windows().values() if w['space'] in allowed]
-    described, warnings = adapters.annotate(with_bundles(current))
+    described, warnings = adapters.annotate(with_bundles(current), include_chrome=include_chrome)
     if warnings: print(json.dumps({'warnings': warnings}, ensure_ascii=False), flush=True)
     return described, spaces, e.query('displays')
 
 
-def reopen_windows(document, current, wait_seconds):
+def reopen_windows(document, current, wait_seconds, wait_ready=True):
     saved = document['state']['windows']
-    adapters.set_hints(saved)
+    if wait_ready: adapters.set_hints(saved)
     opened = []
     warnings = []
     sources = {}
+    chrome_ready = {}
     for w in saved:
         source = adapters.key(w.get('reopen'))
         if source: sources.setdefault(source, []).append(w)
@@ -369,11 +377,11 @@ def reopen_windows(document, current, wait_seconds):
             warnings.append(app + ': hay ventanas sin ruta identificable; no se abren duplicados a ciegas')
             continue
         try:
-            adapters.launch(slots[0]['reopen'])
+            adapters.launch(slots[0]['reopen'], chrome_ready=chrome_ready)
             opened.append(app + ': ' + source[1])
         except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
             warnings.append(app + ': ' + str(exc))
-    if opened:
+    if opened and wait_ready:
         deadline = time.monotonic() + wait_seconds
         previous = None
         stable = 0
@@ -388,6 +396,90 @@ def reopen_windows(document, current, wait_seconds):
         else:
             warnings.append('Algunos orígenes no produjeron una ventana identificable a tiempo.')
     return dict(reopened_windows=opened, warnings=warnings)
+
+
+def progress(message, started):
+    # The shell wrapper buffers stdout until exit; write progress immediately.
+    line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] +{time.monotonic()-started:.1f}s {message}"
+    with open(DATA / 'run.log', 'a') as log:
+        log.write(line + '\n')
+
+
+def run_open_jobs(jobs, limit, report):
+    results = []
+    started = time.monotonic()
+    def run(label, operation):
+        began = time.monotonic()
+        return operation(), time.monotonic()-began
+    with ThreadPoolExecutor(max_workers=limit) as pool:
+        pending = {pool.submit(run, label, operation):label for label,operation in jobs}
+        while pending:
+            finished, _ = wait(pending, timeout=5, return_when=FIRST_COMPLETED)
+            if not finished:
+                report('Esperando aperturas: ' + ', '.join(sorted(set(pending.values()))), started)
+            for task in finished:
+                label = pending.pop(task)
+                try:
+                    result, elapsed = task.result()
+                except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                    result, elapsed = {'warnings':[label + ': ' + str(exc)]}, None
+                results.append(result)
+                suffix = f' ({elapsed:.1f}s)' if elapsed is not None else ' (error)'
+                report('Terminó apertura: ' + label + suffix, started)
+    return results
+
+
+def open_parallel(document, current, config, wait_seconds):
+    """Concurrent app starts; a single serial job owns each Chrome profile."""
+    limit = config.get('launch_concurrency', 3)
+    if type(limit) is not int or not 1 <= limit <= 3:
+        raise ERROR('launch_concurrency debe ser un entero entre 1 y 3.')
+    saved = document['state']['windows']
+    adapters.set_hints(saved)  # Immutable during worker execution.
+    jobs = []
+    missing = sorted({w['app'] for w in saved if not w.get('reopen') and not is_chrome(w)
+                      and not any(same_app(w, other) and other.get('reopen') for other in saved)
+                      and not any(same_app(w, now) for now in current)})
+    for app in missing:
+        subset = {**document, 'state':{**document['state'], 'windows':[w for w in saved if w['app']==app]}}
+        jobs.append((app, lambda doc=subset: open_missing_apps(doc, current, config, wait_seconds, wait_ready=False)))
+    groups = {}
+    for w in saved:
+        source = adapters.key(w.get('reopen'))
+        if source:
+            group = ('Chrome', w['reopen']['profile']) if source[0]=='chrome-window' else ('Code', w['app'])
+            groups.setdefault(group, []).append(w)
+    for group, windows in groups.items():
+        subset = {**document, 'state':{**document['state'], 'windows':windows}}
+        jobs.append((group[0], lambda doc=subset: reopen_windows(doc, current, wait_seconds, wait_ready=False)))
+    started = time.monotonic()
+    progress(f'Abriendo apps (máximo {limit} tareas simultáneas)', started)
+    results = run_open_jobs(jobs, limit, progress)
+    warnings = [message for result in results for message in result.get('warnings', [])]
+    # One shared stabilization pass, not one deadline per app or window.
+    deadline = time.monotonic() + wait_seconds
+    previous = None
+    stable = 0
+    described = current
+    last_progress = -float('inf')
+    while time.monotonic() < deadline:
+        described, notes = adapters.annotate(with_bundles(list(e.windows().values())))
+        matches, _ = match(saved, described)
+        signature = tuple(sorted((w['id'], w['pid'], digest(w.get('title'))) for w in described if eligible(w)))
+        stable = stable + 1 if signature == previous else 0
+        previous = signature
+        if all(w['id'] in matches for w in saved) and stable >= 2:
+            break
+        if time.monotonic()-last_progress >= 5:
+            progress(f'Identificando ventanas: {len(matches)}/{len(saved)}', started)
+            last_progress = time.monotonic()
+        time.sleep(min(1, max(0, deadline-time.monotonic())))
+    else:
+        warnings.append('Terminó la espera compartida: faltan ventanas identificables; consulta los escritorios omitidos.')
+    progress('Aperturas terminadas; preparando posiciones y tamaños', started)
+    return dict(opened=[app for result in results for app in result.get('opened', [])],
+                reopened_windows=[app for result in results for app in result.get('reopened_windows', [])],
+                warnings=warnings)
 
 
 def create_recovery():
@@ -410,15 +502,15 @@ def create_recovery():
         e.save(dict(format='diagnostic-only', reason=str(exc),
                     positions_file=str(DATA / 'before-restore-positions.json')),
                DATA / 'before-restore.json')
-        print(json.dumps({'warnings': ['El mosaico actual no permite un respaldo completo; '
-                                     'se guardaron posiciones de diagnóstico. El layout original permanece intacto.']},
-                         ensure_ascii=False), flush=True)
+        # Expected fallback: details stay in the recovery file, not user warnings.
         return
     recovery['phase'] = 'before-layout-restore'
     e.save(recovery, DATA / 'before-restore.json')
 
 
 def execute_restore(state, document, report):
+    started = time.monotonic()
+    progress('Preparando respaldo y verificando destinos', started)
     if not state['windows']:
         raise ERROR('No hay escritorios completos y seguros que restaurar. Consulta preview.')
     # Recovery snapshot is separate from the named layout, which is never overwritten here.
@@ -450,7 +542,9 @@ def execute_restore(state, document, report):
         for w in state['windows']:
             if e.windows()[w['id']]['space'] != w['space']:
                 e.win(w['id'], '--space', w['space'])
+        progress('Restaurando posiciones, tamaños y zoom', started)
         e.restore(state, verify_result=True)
+        progress('Posiciones, tamaños y zoom verificados', started)
     finally:
         e.restore_focus(state)
         e.cmd('-m', 'config', 'mouse_follows_focus', mouse)
@@ -499,16 +593,11 @@ def main():
             document = json.loads(path.read_text())
             adapters.set_hints(document['state']['windows'])
             if args.action in ('restore', 'restore-open'): prepare_chrome_picker()
-            current, spaces, displays = inventory()
+            current, spaces, displays = inventory(include_chrome=args.action != 'restore-open')
             if args.action == 'restore-open':
-                reopened = reopen_windows(document, current, wait_seconds)
-                print(json.dumps(reopened, ensure_ascii=False), flush=True)
-                if reopened['reopened_windows']:
-                    current, spaces, displays = inventory()
-                opened = open_missing_apps(document, current, config, wait_seconds)
-                print(json.dumps(opened, indent=2, ensure_ascii=False), flush=True)
-                if opened['opened']:
-                    current, spaces, displays = inventory()
+                opened = open_parallel(document, current, config, wait_seconds)
+                print(json.dumps(opened, ensure_ascii=False), flush=True)
+                current, spaces, displays = inventory()
             available = {s['index'] for s in spaces}
             relevant = [s for s in document['state']['spaces'] if s['index'] in available]
             state, report = plan(document, current, spaces, displays, settings(relevant))

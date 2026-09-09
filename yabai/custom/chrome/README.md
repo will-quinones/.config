@@ -81,3 +81,15 @@ Un lector local de WindowServer comprueba pares ID/PID y descarta solo referenci
 mkdir -p "$HOME/.local/state/yabai-desktop-layout/bin"
 swiftc "$HOME/.config/yabai/custom/shared/window-identities.swift" -o "$HOME/.local/state/yabai-desktop-layout/bin/window-identities"
 ```
+
+## Apertura concurrente y reconexión
+
+`restore-open` inicia hasta **3 tareas simultáneas**. Configura `launch_concurrency` entre 1 y 3 en `/Users/williamquinones/.config/yabai/custom/layouts/desktop-layout.json`. Las ventanas de Code se abren en secuencia dentro de su tarea; cada perfil Chrome tiene su propia tarea secuencial. Las apps genéricas no esperan primero a Chrome. Las posiciones se restauran después de identificar las ventanas, no desde los hilos de apertura.
+
+La extensión reintenta conectar tras 1, 2, 4, 8 y luego 10 segundos, con una alarma de respaldo si Chrome suspende el worker. El adaptador conserva un límite de espera de 75 segundos por perfil y operación, pero ya no repite esa preparación para cada ventana. Un fallo de apertura no se reintenta automáticamente: podría haber creado una ventana antes del timeout.
+
+Después de actualizar `extension/worker.js`, recarga **Yabai · ventanas y grupos** en `chrome://extensions` en cada perfil que la utilice. No necesitas guardar de nuevo el layout ni cerrar las ventanas.
+
+El avance y los tiempos se escriben inmediatamente en `/Users/williamquinones/.local/state/yabai-desktop-layout/run.log`, aunque el wrapper aún esté esperando. Estos mensajes son del log; las notificaciones de escritorio continúan indicando inicio y resultado final.
+
+Pruebas sin mover ventanas: `python3 -m unittest discover -s layouts -p 'test*.py'`, `python3 -m unittest discover -s chrome/tests -p 'test*.py'` y `node --test chrome/tests/*.mjs`, desde `yabai/custom`. La prueba del puente crea un socket aislado. Para revertir esta mejora, restaura juntos el script de layouts, ambos adaptadores, su JSON y el worker de la copia previa; recarga la extensión después.
