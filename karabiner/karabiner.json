@@ -1842,7 +1842,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/yabai --restart-service"
+            "shell_command" : "/Users/williamquinones/.config/yabai/restart-preserving.sh restart"
           } ],
           "type" : "basic"
         }, {

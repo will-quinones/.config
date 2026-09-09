@@ -42,6 +42,7 @@
  ;; ─────────────────────────────── Templates ──────────────────────────────────
  :templates {:yabai      "/opt/homebrew/bin/yabai -m %s"
              :yabai-service "/opt/homebrew/bin/yabai %s"
+             :yabai-preserve "/Users/williamquinones/.config/yabai/restart-preserving.sh %s"
              :launch-app "open -a '%s'"
              :close-app  "osascript -e 'quit app \"%s\"'"
              :open       "open -n '/Applications/%s.app'"
@@ -248,7 +249,7 @@
            [:!E#Pa [:yabai "window --toggle zoom-fullscreen"]]
 
            ;; ─────────────── Start / stop yabai service ───────────────
-           [:!TOC#Pr [:yabai-service "--restart-service"]]
+           [:!TOC#Pr [:yabai-preserve "restart"]]
            ;; [:!TOC#Pp "yabai --restart-service"]
            [:!TOC#Pp "yabai --stop-service"]
            [:!TOC#Ps "yabai --start-service"]
