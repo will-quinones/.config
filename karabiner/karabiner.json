@@ -1842,7 +1842,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/Users/williamquinones/.config/yabai/restart-preserving.sh restart"
+            "shell_command" : "/Users/williamquinones/.config/yabai/custom/restart-preserving.sh restart"
           } ],
           "type" : "basic"
         }, {

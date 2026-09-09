@@ -42,7 +42,7 @@
  ;; ─────────────────────────────── Templates ──────────────────────────────────
  :templates {:yabai      "/opt/homebrew/bin/yabai -m %s"
              :yabai-service "/opt/homebrew/bin/yabai %s"
-             :yabai-preserve "/Users/williamquinones/.config/yabai/restart-preserving.sh %s"
+             :yabai-preserve "/Users/williamquinones/.config/yabai/custom/restart-preserving.sh %s"
              :launch-app "open -a '%s'"
              :close-app  "osascript -e 'quit app \"%s\"'"
              :open       "open -n '/Applications/%s.app'"
