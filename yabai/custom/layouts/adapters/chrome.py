@@ -144,7 +144,7 @@ def marker_page(token):
     path.write_text("""<!doctype html><meta charset=utf-8>
 <title>YABAI_RESTORE_%s</title>
 <style>html{background:#fff}@media(prefers-color-scheme:dark){html{background:#202124}}</style>
-<script>setTimeout(()=>location.replace('about:blank'),45000)</script>
+<script>setTimeout(()=>location.replace('chrome://newtab/'),45000)</script>
 """ % token)
     path.chmod(0o600)
     return path
