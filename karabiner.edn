@@ -36,7 +36,7 @@
                 :chatgpt   ["^com\\.openai\\.ChatGPT$"]
                 :postman   ["^com\\.postmanlabs\\.mac$"]
                 :intellij  ["^com\\.jetbrains.intellij\\.ce$"]
-                :anki      ["^net\\.ankiweb\\.launcher"]
+                :anki      ["^net\\.ankiweb\\.anki$"]
                 :windowsapp ["^com\\.microsoft\\.rdc\\.macos$"]}
 
  ;; ─────────────────────────────── Templates ──────────────────────────────────
