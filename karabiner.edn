@@ -124,8 +124,8 @@
            ;; ── answer and scroll shortcuts anywhere in Anki ──
            [:hyphen :d]
            [:equal_sign :s]
-           [:!Ehyphen {:mkey {:vwheel -40 :speed 2}}]
-           [:!Eequal_sign {:mkey {:vwheel 40 :speed 2}}]
+           [:!Ehyphen {:mkey {:vwheel -30 :speed 2}}]
+           [:!Eequal_sign {:mkey {:vwheel 30 :speed 2}}]
            ;; ── misc ──
            [:#Pslash :r :anki-layer]
            [:backslash [:escape ["inf" 0] ["stats" 0]] :anki-layer]
