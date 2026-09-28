@@ -718,7 +718,7 @@
           },
           "to" : [ {
             "mouse_key" : {
-              "vertical_wheel" : -30,
+              "vertical_wheel" : -25,
               "speed_multiplier" : 2
             }
           } ],
@@ -736,7 +736,7 @@
           },
           "to" : [ {
             "mouse_key" : {
-              "vertical_wheel" : 30,
+              "vertical_wheel" : 25,
               "speed_multiplier" : 2
             }
           } ],
