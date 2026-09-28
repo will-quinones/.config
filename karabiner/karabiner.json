@@ -690,10 +690,7 @@
             "key_code" : "hyphen"
           },
           "to" : [ {
-            "mouse_key" : {
-              "vertical_wheel" : -40,
-              "speed_multiplier" : 2
-            }
+            "key_code" : "d"
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
@@ -705,10 +702,7 @@
             "key_code" : "equal_sign"
           },
           "to" : [ {
-            "mouse_key" : {
-              "vertical_wheel" : 40,
-              "speed_multiplier" : 2
-            }
+            "key_code" : "s"
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
@@ -723,7 +717,10 @@
             }
           },
           "to" : [ {
-            "key_code" : "d"
+            "mouse_key" : {
+              "vertical_wheel" : -40,
+              "speed_multiplier" : 2
+            }
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
@@ -738,7 +735,10 @@
             }
           },
           "to" : [ {
-            "key_code" : "s"
+            "mouse_key" : {
+              "vertical_wheel" : 40,
+              "speed_multiplier" : 2
+            }
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
