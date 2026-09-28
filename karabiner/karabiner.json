@@ -583,6 +583,11 @@
               "name" : "inf",
               "value" : 1
             }
+          }, {
+            "set_variable" : {
+              "name" : "stats",
+              "value" : 0
+            }
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
@@ -636,6 +641,11 @@
               "name" : "stats",
               "value" : 1
             }
+          }, {
+            "set_variable" : {
+              "name" : "inf",
+              "value" : 0
+            }
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
@@ -688,29 +698,6 @@
           "conditions" : [ {
             "type" : "frontmost_application_if",
             "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "stats",
-            "value" : 1,
-            "type" : "variable_if"
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
-            "key_code" : "hyphen"
-          },
-          "to" : [ {
-            "mouse_key" : {
-              "vertical_wheel" : -40,
-              "speed_multiplier" : 2
-            }
-          } ],
-          "conditions" : [ {
-            "type" : "frontmost_application_if",
-            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "inf",
-            "value" : 1,
-            "type" : "variable_if"
           } ],
           "type" : "basic"
         }, {
@@ -726,34 +713,14 @@
           "conditions" : [ {
             "type" : "frontmost_application_if",
             "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "stats",
-            "value" : 1,
-            "type" : "variable_if"
           } ],
           "type" : "basic"
         }, {
           "from" : {
-            "key_code" : "equal_sign"
-          },
-          "to" : [ {
-            "mouse_key" : {
-              "vertical_wheel" : 40,
-              "speed_multiplier" : 2
+            "key_code" : "hyphen",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ]
             }
-          } ],
-          "conditions" : [ {
-            "type" : "frontmost_application_if",
-            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "inf",
-            "value" : 1,
-            "type" : "variable_if"
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
-            "key_code" : "hyphen"
           },
           "to" : [ {
             "key_code" : "d"
@@ -761,15 +728,14 @@
           "conditions" : [ {
             "type" : "frontmost_application_if",
             "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "anki-layer",
-            "value" : 1,
-            "type" : "variable_if"
           } ],
           "type" : "basic"
         }, {
           "from" : {
-            "key_code" : "equal_sign"
+            "key_code" : "equal_sign",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ]
+            }
           },
           "to" : [ {
             "key_code" : "s"
@@ -777,10 +743,6 @@
           "conditions" : [ {
             "type" : "frontmost_application_if",
             "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "anki-layer",
-            "value" : 1,
-            "type" : "variable_if"
           } ],
           "type" : "basic"
         }, {
@@ -808,6 +770,16 @@
           },
           "to" : [ {
             "key_code" : "escape"
+          }, {
+            "set_variable" : {
+              "name" : "inf",
+              "value" : 0
+            }
+          }, {
+            "set_variable" : {
+              "name" : "stats",
+              "value" : 0
+            }
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",

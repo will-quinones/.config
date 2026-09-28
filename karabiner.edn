@@ -116,22 +116,19 @@
            [:right_shift :!OCs]
            [{:pkey :button1} :return_or_enter :anki-layer]
            [{:pkey :button2} :semicolon :anki-layer]
-           ;; ── inf (definition) toggle ──
-           [:#Pquote [:i ["inf" 1]] [:anki-layer :!inf]]
+           ;; ── inf and stats toggles ──
+           [:#Pquote [:i ["inf" 1] ["stats" 0]] [:anki-layer :!inf]]
            [:#Pquote [:escape ["inf" 0]] [:anki-layer :inf]]
-           ;; ── stats toggle ──
-           [:close_bracket [:t ["stats" 1]] [:anki-layer :!stats]]
+           [:close_bracket [:t ["stats" 1] ["inf" 0]] [:anki-layer :!stats]]
            [:close_bracket [:escape ["stats" 0]] [:anki-layer :stats]]
-           ;; ── scroll while stats OR inf is active (separate manipulators = OR) ──
-           [:hyphen {:mkey {:vwheel -40 :speed 2}} [:stats]]
-           [:hyphen {:mkey {:vwheel -40 :speed 2}} [:inf]]
-           [:equal_sign {:mkey {:vwheel 40 :speed 2}} [:stats]]
-           [:equal_sign {:mkey {:vwheel 40 :speed 2}} [:inf]]
-            ;; ── misc ──
-           [:hyphen :d :anki-layer]
-           [:equal_sign :s :anki-layer]
+           ;; ── scroll and answer shortcuts anywhere in Anki ──
+           [:hyphen {:mkey {:vwheel -40 :speed 2}}]
+           [:equal_sign {:mkey {:vwheel 40 :speed 2}}]
+           [:!Ehyphen :d]
+           [:!Eequal_sign :s]
+c           ;; ── misc ──
            [:#Pslash :r :anki-layer]
-           [:backslash :escape :anki-layer]
+           [:backslash [:escape ["inf" 0] ["stats" 0]] :anki-layer]
            [:comma :!C#Pz :anki-layer]
            [:period :!SC#Pz :anki-layer]]}
 
