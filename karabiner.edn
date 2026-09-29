@@ -121,11 +121,14 @@
            [:#Pquote [:escape ["inf" 0]] [:anki-layer :inf]]
            [:close_bracket [:t ["stats" 1] ["inf" 0]] [:anki-layer :!stats]]
            [:close_bracket [:escape ["stats" 0]] [:anki-layer :stats]]
-           ;; ── answer and scroll shortcuts anywhere in Anki ──
-           [:hyphen :d]
-           [:equal_sign :s]
-           [:!Ehyphen {:mkey {:vwheel -25 :speed 2}}]
-           [:!Eequal_sign {:mkey {:vwheel 25 :speed 2}}]
+            ;; ── scroll shortcuts in info and stats ──
+            [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :inf]]
+            [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :inf]]
+            [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :stats]]
+            [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :stats]]
+            ;; ── answer shortcuts anywhere else in Anki ──
+            [:hyphen :d]
+            [:equal_sign :s]
            ;; ── misc ──
            [:#Pslash :r :anki-layer]
            [:backslash [:escape ["inf" 0] ["stats" 0]] :anki-layer]
