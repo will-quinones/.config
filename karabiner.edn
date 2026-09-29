@@ -126,9 +126,11 @@
             [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :inf]]
             [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :stats]]
             [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :stats]]
-            ;; ── answer shortcuts anywhere else in Anki ──
+            ;; ── answer and scroll shortcuts anywhere else in Anki ──
             [:hyphen :d]
             [:equal_sign :s]
+            [:!Ehyphen {:mkey {:vwheel -25 :speed 2}}]
+            [:!Eequal_sign {:mkey {:vwheel 25 :speed 2}}]
            ;; ── misc ──
            [:#Pslash :r :anki-layer]
            [:backslash [:escape ["inf" 0] ["stats" 0]] :anki-layer]
