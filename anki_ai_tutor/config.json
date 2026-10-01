@@ -63,7 +63,8 @@
   "deck_profile_bindings": {
     "anki:User 1|deck:1780063958392|notetype:1724115306123": "legacy-profile",
     "anki:User 1|deck:1698323764568|notetype:1556383057915": "legacy-profile",
-    "anki:Will|deck:1780063958392|notetype:1724115306123": "legacy-profile"
+    "anki:Will|deck:1780063958392|notetype:1724115306123": "legacy-profile",
+    "anki:Will|deck:1698323764568|notetype:1556383057915": "legacy-profile"
   },
   "timeout_seconds": 120,
   "max_context_chars": 30000,
