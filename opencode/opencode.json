@@ -48,6 +48,11 @@
       "action": "shell",
       "resource": "git push *",
       "effect": "ask"
+    },
+    {
+      "action": "external_directory",
+      "resource": "~/Documents/DEV/**",
+      "effect": "allow"
     }
   ],
   "share": "disabled"
