@@ -230,7 +230,7 @@
            [:!F#Pd [:yabai "window --toggle warp || open -a Warp"]]
            [:!FC#Pc [:yabai "window --toggle claude || open -a Claude"]]
            [:!F#Pc [:yabai "window --toggle gpt || open -a ChatGPT"]]
-           [:!F#Pg [:yabai "window --toggle gatherv2 || open -a GatherV2"]]
+           [:!F#Pg [:yabai "window --toggle notion || open -a Notion"]]
            [:!F#Pe [:yabai "window --toggle mail || open -a Mail"]]
            [:!F#Pa [:yabai "window --toggle anki || open -a Anki"] nil {:afterup [:yabai "window --focus mouse"]}]
            [:!F#Pv [:yabai "window --toggle obsidian || open -a Obsidian"]]

@@ -1785,7 +1785,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle gatherv2 || open -a GatherV2"
+            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle notion || open -a Notion"
           } ],
           "type" : "basic"
         }, {
