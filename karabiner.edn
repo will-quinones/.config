@@ -258,7 +258,6 @@
 
            ;; ─────────────── Float / fullscreen / zoom ───────────────
            [:!FO#Pspacebar [:yabai "window --toggle float --grid 11:11:1:1:7:7"]]
-           [:!T#Pf [:yabai "window --toggle zoom-parent"]]
            [:!O#Pa [:yabai "window --toggle zoom-fullscreen"]]
            [:!E#Pa [:yabai "window --toggle zoom-fullscreen"]]
 

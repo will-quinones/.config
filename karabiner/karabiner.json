@@ -1985,18 +1985,6 @@
           "type" : "basic"
         }, {
           "from" : {
-            "key_code" : "f",
-            "modifiers" : {
-              "mandatory" : [ "left_control" ],
-              "optional" : [ "caps_lock" ]
-            }
-          },
-          "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle zoom-parent"
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
             "key_code" : "a",
             "modifiers" : {
               "mandatory" : [ "left_option" ],
