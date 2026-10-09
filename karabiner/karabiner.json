@@ -1785,6 +1785,18 @@
             }
           },
           "to" : [ {
+            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle gemini || open -a Gemini"
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "n",
+            "modifiers" : {
+              "mandatory" : [ "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
             "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle notion || open -a Notion"
           } ],
           "type" : "basic"
