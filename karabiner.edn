@@ -155,7 +155,14 @@
            [:!FC#Pi :!SCopen_bracket]
            [:!FC#Po :!SCclose_bracket]]}
 
-  {:des "Yabai keybinds"
+   {:des "Next, Prev Cursor VsCode"
+    :rules [:code
+            [:!F#Pu :!Tu]
+            [:!F#Pp :!CTOp]
+            [:!F#Pn :!Ttab]
+            [:!F#Pslash :!Ff12]]}
+
+   {:des "Yabai keybinds"
    :rules [;; ─────────────── Navigation: focus spaces (SIP deactivated) ───────────────
            ;; SIP-activated variants (display --focus) kept for reference:
            ;; [:!E#Pz [:!Ez [:yabai "display --focus 1"]]] ... etc.
@@ -375,14 +382,7 @@
    :rules [[:!F#Pi :!SCopen_bracket]
            [:!F#Po :!SCclose_bracket]]}
 
-  {:des "Next, Prev Cursor VsCode"
-   :rules [:code
-           [:!F#Pu :!Tu]
-           [:!F#Pp :!CTOp]
-           [:!F#Pn :!Ttab]
-           [:!F#Pslash :!Ff12]]}
-
-  {:des "Next, Prev Cursor intellij"
+   {:des "Next, Prev Cursor intellij"
    :rules [[:!F#Pu :!Thyphen :intellij]
            [:!F#Pp :!SThyphen :intellij]]}
 
