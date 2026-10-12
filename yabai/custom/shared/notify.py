@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/Users/williamquinones/.config/yabai/custom/shared/python3
 """Native, best-effort notifications for custom yabai wrappers. No window actions."""
 import argparse
 import json

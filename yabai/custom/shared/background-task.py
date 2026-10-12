@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/Users/williamquinones/.config/yabai/custom/shared/python3
 """Detach long custom yabai tasks from Karabiner's cancellable shell commands."""
 import argparse
 import os

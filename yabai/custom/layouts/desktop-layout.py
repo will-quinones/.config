@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/Users/williamquinones/.config/yabai/custom/shared/python3
 """Save and restore named yabai layouts across login/reboot.
 restore uses open windows only; restore-open also launches missing apps.
 No service restart, Space creation, or native fullscreen support.

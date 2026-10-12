@@ -11,11 +11,11 @@ ACTION="${1:-restart}"
 EVENT_ACTION="$ACTION"
 [ "$ACTION" != restore ] || EVENT_ACTION=recover
 notify() {
-    /opt/homebrew/bin/python3 "$BASE/../shared/notify.py" "$EVENT_ACTION" "$1" "$TMP" >> "$DIR/run.log" 2>&1 || true
+    "$BASE/../shared/python3" "$BASE/../shared/notify.py" "$EVENT_ACTION" "$1" "$TMP" >> "$DIR/run.log" 2>&1 || true
 }
 printf '\n--- %s ---\n' "$(date '+%Y-%m-%d %H:%M:%S')" >> "$DIR/run.log"
 case "$ACTION" in restart|restore|capture) notify start ;; esac
-if /opt/homebrew/bin/python3 "$BASE/restart_preserving.py" "$ACTION" > "$TMP" 2>&1; then
+if "$BASE/../shared/python3" "$BASE/restart_preserving.py" "$ACTION" > "$TMP" 2>&1; then
     cat "$TMP"
     cat "$TMP" >> "$DIR/run.log"
     case "$ACTION" in restart|restore|capture) notify success ;; esac

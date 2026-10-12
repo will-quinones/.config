@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/Users/williamquinones/.config/yabai/custom/shared/python3
 """Conservative yabai restart. Never closes apps or creates/destroys Spaces.
 
 Usage: restart_preserving.py inspect|capture|restart|restore [--state PATH]

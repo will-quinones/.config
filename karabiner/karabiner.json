@@ -2099,7 +2099,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout save"
+            "shell_command" : "/Users/williamquinones/.config/yabai/custom/shared/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout save"
           } ],
           "type" : "basic"
         }, {
@@ -2111,7 +2111,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout restore"
+            "shell_command" : "/Users/williamquinones/.config/yabai/custom/shared/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout restore"
           } ],
           "type" : "basic"
         }, {
@@ -2123,7 +2123,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout restore-open"
+            "shell_command" : "/Users/williamquinones/.config/yabai/custom/shared/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py layout restore-open"
           } ],
           "type" : "basic"
         }, {
@@ -2135,7 +2135,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "/opt/homebrew/bin/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py restart restart"
+            "shell_command" : "/Users/williamquinones/.config/yabai/custom/shared/python3 /Users/williamquinones/.config/yabai/custom/shared/background-task.py restart restart"
           } ],
           "type" : "basic"
         }, {
@@ -2147,7 +2147,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "yabai --stop-service"
+            "shell_command" : "/opt/homebrew/bin/yabai --stop-service"
           } ],
           "type" : "basic"
         }, {
@@ -2159,7 +2159,7 @@
             }
           },
           "to" : [ {
-            "shell_command" : "yabai --start-service"
+            "shell_command" : "/opt/homebrew/bin/yabai --start-service"
           } ],
           "type" : "basic"
         }, {

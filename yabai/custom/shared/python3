@@ -1,0 +1,16 @@
+#!/bin/sh
+# Resuelve el Python 3 de Homebrew de forma estable entre actualizaciones.
+# No depende de una versión concreta (p. ej. python3.14): prueba, en orden,
+# la ruta "rodante" de Homebrew, cualquier python@3.x instalado y respaldos.
+for p in \
+    /opt/homebrew/opt/python@3/libexec/bin/python3 \
+    /opt/homebrew/opt/python@3.*/libexec/bin/python3 \
+    /opt/homebrew/bin/python3 \
+    /opt/homebrew/bin/python3.* \
+    /usr/bin/python3; do
+    if [ -x "$p" ]; then
+        exec "$p" "$@"
+    fi
+done
+echo "python3 no encontrado" >&2
+exit 127
