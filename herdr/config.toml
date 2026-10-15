@@ -3,7 +3,7 @@ onboarding = false
 prompt_new_tab_name = false
 agent_panel_sort = "priority"
 [ui.toast]
-delivery = "system"
+delivery = "off"
 
 # Navigation sent by Karabiner while Warp is frontmost.
 [keys]
@@ -12,3 +12,6 @@ next_tab = ["prefix+n", "alt+shift+o"]
 previous_workspace = "alt+shift+u"
 next_workspace = "alt+shift+y"
 last_pane = "alt+shift+n"
+
+[ui.sound]
+enabled = false
