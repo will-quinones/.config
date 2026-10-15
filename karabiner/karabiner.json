@@ -1069,6 +1069,25 @@
           "type" : "basic"
         }, {
           "from" : {
+            "key_code" : "r",
+            "modifiers" : {
+              "mandatory" : [ "left_command", "left_shift" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "key_code" : "x",
+            "modifiers" : [ "left_control" ]
+          }, {
+            "key_code" : "l"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^dev\\.warp\\.Warp-Stable$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
             "key_code" : "i",
             "modifiers" : {
               "mandatory" : [ "left_command", "fn" ],

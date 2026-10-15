@@ -16,8 +16,8 @@
                 :chrome    ["^com\\.google\\.Chrome$"]
                 :finder    ["^com\\.apple\\.finder$"]
                 :obsidian  ["^md\\.obsidian$"]
-                :notion    ["^notion\\.id$"]
-                :music     ["^com\\.apple\\.Music"]
+                 :notion    ["^notion\\.id$"]
+                 :music     ["^com\\.apple\\.Music"]
                 :code      ["^com\\.visualstudio\\.code\\.oss$"
                             "^com\\.microsoft\\.VSCode(Insiders)?$"
                             "^com\\.microsoft\\.VSCode?$"
@@ -150,9 +150,10 @@
            [:!F#Pi :!OSi]
            [:!F#Po :!OSo]
            [:!F#Pu :!OSu]
-           [:!F#Pp :!OSy]
-           [:!F#Pn :!OSn]
-           [:!FC#Pi :!SCopen_bracket]
+            [:!F#Pp :!OSy]
+            [:!F#Pn :!OSn]
+            [:!SC#Pr [:!Tx :l]]
+            [:!FC#Pi :!SCopen_bracket]
            [:!FC#Po :!SCclose_bracket]]}
 
    {:des "Next, Prev Cursor VsCode"
