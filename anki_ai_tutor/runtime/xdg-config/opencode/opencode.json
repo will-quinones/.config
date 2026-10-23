@@ -1,0 +1,1 @@
+{"update": "disable", "share": "disabled", "permissions": [{"action": "*", "resource": "*", "effect": "deny"}], "agents": {"anki-ai-tutor": {"description": "Answer one study question without using tools", "mode": "primary", "permissions": [{"action": "*", "resource": "*", "effect": "deny"}]}}, "mcp": {"servers": {}}, "plugins": []}
