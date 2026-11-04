@@ -339,6 +339,31 @@ def match(saved, current):
                 result[w['id']] = candidates[0]
             else:
                 reasons[w['id']] = w['app'] + ': origen de ventana ausente, excluido o ambiguo'
+        # Chrome's runtime token changes after its window/process is recreated.
+        # Recover only an unambiguous slot already on its saved Space. Never
+        # steal a token belonging to another saved window or bypass exclusions.
+        if is_chrome(all_old[0]):
+            saved_keys = {adapters.key(w.get('reopen')) for w in all_old}
+            used = {w['id'] for w in result.values()}
+            for w in all_old:
+                source = adapters.key(w.get('reopen'))
+                if w['id'] in result or not source or source[0] != 'chrome-window':
+                    continue
+                peers = [x for x in all_old if x.get('space') == w.get('space')]
+                candidates = [x for x in all_new if x.get('space') == w.get('space')]
+                if w.get('space') is None or len(peers) != 1 or len(candidates) != 1:
+                    continue
+                live = candidates[0]
+                live_key = adapters.key(live.get('reopen'))
+                if live['id'] in used or live_key in saved_keys:
+                    continue
+                old_profile = w['reopen'].get('profile_directory')
+                new_profile = (live.get('reopen') or {}).get('profile_directory')
+                if old_profile and new_profile and old_profile != new_profile:
+                    continue
+                result[w['id']] = live
+                used.add(live['id'])
+                reasons.pop(w['id'], None)
         old = [w for w in all_old if not w.get('reopen')]
         if not old: continue
         used = {w['id'] for w in result.values()}
@@ -554,7 +579,11 @@ def open_parallel(document, current, config, wait_seconds):
         source = adapters.key(w.get('reopen'))
         if source: sources.setdefault(source, []).append(w)
     saved_chrome = {source for source in sources if source[0] == 'chrome-window'}
+    existing_matches, _ = match(saved, current) if current else ({}, {})
+    matched_chrome = {live['id'] for wid, live in existing_matches.items()
+                      if any(w['id'] == wid and is_chrome(w) for w in saved)}
     extra_chrome = [w for w in current if is_chrome(w) and eligible(w)
+                    and w['id'] not in matched_chrome
                     and adapters.key(w.get('reopen')) not in saved_chrome]
     if extra_chrome:
         initial_results.append({
@@ -571,6 +600,8 @@ def open_parallel(document, current, config, wait_seconds):
         if source[0] == 'chrome-window' and extra_chrome:
             continue
         window = windows[0]
+        if source[0] == 'chrome-window' and window['id'] in existing_matches:
+            continue
         subset = {**document, 'state':{**document['state'], 'windows':[window]}}
         label = f"{app} · escritorio {window['space']}"
         jobs.append((label, lambda doc=subset: reopen_windows(

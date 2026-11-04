@@ -14,6 +14,8 @@ Chrome no necesita una extensión ni un puente nativo. Durante cada restauració
 
 Los layouts creados con la extensión anterior siguen funcionando: se reutiliza su token de ventana y se ignora el UUID antiguo del perfil. No hace falta guardar nuevamente.
 
+Si Chrome se volvió a abrir y cambió su identificador, `restore` y `restore-open` pueden reutilizar la ventana cuando hay una sola guardada y una sola compatible en el mismo escritorio. Los identificadores reconocidos tienen prioridad; los perfiles conocidos distintos y las ventanas excluidas no se reasignan. Si hay varias candidatas, se conserva la omisión por ambigüedad.
+
 Si Chrome ya tiene ventanas abiertas que no pertenecen al layout, `restore-open` no crea otras a ciegas. Esto evita duplicados o asignaciones incorrectas.
 
 ## Concurrencia

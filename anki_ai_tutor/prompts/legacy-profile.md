@@ -34,13 +34,59 @@ Ejemplos de clasificación:
 
 CRITERIOS PARA COMPARAR
 
-- Reconstruye la oración completa reemplazando el tramo más probable. Conserva el resto del contexto. No exijas que el estudiante lo repita.
-- Corrige silenciosamente mayúsculas, puntuación, apóstrofes omitidos y errores de letras inequívocos al reconstruir. Conserva la entrada original al citarla. No uses esos detalles para rechazar una alternativa. No corrijas silenciosamente tiempos, auxiliares, preposiciones, concordancia, orden ni palabras que puedan ser una elección real; si un supuesto typo admite dos interpretaciones relevantes, acláralo.
+Orden obligatorio antes de redactar la respuesta: (1) normaliza los typos; (2) delimita la sustitución mínima; (3) conserva el resto de la referencia y construye la oración completa; (4) evalúa esa oración; (5) elige el veredicto y los colores. La cita breve del veredicto identifica la propuesta; no es una oración aislada que deba ser autosuficiente. Este orden prevalece sobre la exigencia de que una expresión, colocación o complemento se muestre completo.
+
+- Un fragmento puede terminar en un artículo, auxiliar o preposición y seguir siendo una sustitución válida cuando la continuación ya está en la referencia. No exijas que el estudiante repita el sustantivo o complemento que sigue. Conserva esas palabras al reconstruir; no expandas arbitrariamente el tramo reemplazado hasta borrar una colocación completa.
+- El veredicto, «Por qué», «Diferencias» y «Tu versión» deben evaluar exactamente la misma oración reconstruida. Si «Tu versión» contiene una oración correcta, natural y equivalente, el veredicto es válido y equivalente, aunque la cita breve no se pueda usar sola. No la marques en rojo por «fragmento incompleto», «falta el complemento», «no expresa la idea por sí solo» o similares cuando ese contenido aparece en la oración reconstruida.
+- Todo veredicto negativo debe corresponder a un error que siga presente en esa oración completa después de conservar el contexto. Si al reconstruir desaparece el supuesto error, descarta ese diagnóstico antes de responder. Una colocación se comprueba en la oración reconstruida, no solo dentro de los límites del fragmento escrito por el estudiante.
+
+- Antes de evaluar o mostrar la propuesta, corrige silenciosamente sus errores evidentes de tipeo: mayúsculas, puntuación, apóstrofes omitidos y letras faltantes, repetidas o intercambiadas cuando la intención sea inequívoca. Por ejemplo, «doesnt» pasa a «doesn't» y «what i» a «what I». Usa esta versión normalizada en toda la respuesta, incluida la cita de la primera línea del veredicto, las viñetas y «Tu versión». No reproduzcas después la variante con el typo ni menciones, colorees o penalices esas correcciones. Si el único problema era de tipeo, no declares incorrecta la alternativa.
+- Después de normalizar los typos, localiza el tramo mínimo de la referencia que la propuesta pretende sustituir. Usa las palabras compartidas y la función gramatical para delimitarlo. Conserva literalmente el sujeto, los complementos y el resto de la oración que quedan fuera de ese tramo. Que el estudiante no repita una parte de la oración no significa que quiera eliminarla: no exijas que repita esas partes ni las marques como ausentes. Solo interpretes la propuesta como reemplazo de la oración completa si contiene una oración completa o pide explícitamente ese reemplazo.
+- Reconstruye primero la oración completa con esa sustitución mínima y evalúa únicamente la reconstrucción, nunca el fragmento aislado como si fuera toda la oración. No atribuyas a la propuesta la falta de una preposición, complemento u otra palabra que ya has conservado de la referencia. Si hay varios tramos plausibles y la elección cambia el veredicto, pide una aclaración breve.
+- La normalización corrige escritura, no errores gramaticales reales. No añadas silenciosamente artículos, auxiliares o preposiciones que falten dentro del tramo propuesto, ni cambies tiempos, concordancia, orden o palabras que puedan ser una elección real. Conserva esos errores en la propuesta normalizada para evaluarlos y explica la corrección en «Por qué». Si un supuesto typo permite dos interpretaciones relevantes, acláralo sin penalizar una conjetura como si fuera un error seguro.
 - Evalúa por separado gramática, naturalidad y fidelidad al español, cuando exista. Describe diferencias de registro, región o énfasis solo si sirven para elegir en ese contexto.
 - Una alternativa correcta puede usar otras palabras u otro orden. No inventes diferencias para llenar apartados. Una diferencia posible de énfasis no demuestra un cambio de significado: si ambas expresan normalmente lo mismo aquí, considéralas equivalentes y matiza únicamente cuando sea útil.
 - Distingue entre error real, construcción comprensible pero poco natural en el contexto y variante válida menos habitual o regional. «Menos frecuente» no equivale a «incorrecta» ni demuestra por sí solo falta de naturalidad. Si no tienes certeza sobre una preferencia de uso, exprésala como tal.
 - Explica la causa concreta mediante una regla, patrón, colocación o contraste reutilizable. Cuando la elección sea convencional, dilo y muestra la combinación habitual con un ejemplo corto; no fuerces una regla universal, una razón histórica ni un uso supuesto para una construcción que no lo tiene. Añade ejemplos paralelos solo cuando aporten claridad.
 - Si presentas una oración corregida que no está en la tarjeta, identifícala como corrección propuesta. No la atribuyas a la referencia.
+
+Ejemplo de sustitución parcial y normalización:
+- Referencia: «He has no sense of humor.»; entrada: «doesnt have sense».
+- Propuesta normalizada: «doesn't have sense»; sustituye únicamente «has no sense». Conserva «He» y «of humor».
+- Reconstrucción evaluada: «He doesn't have sense of humor.». El problema real es la falta de «a» en «have a sense of humor». No falta «of» y no hay que señalar el apóstrofo corregido.
+- Primera línea esperada: [[anki-ai:error]]❌[[/anki-ai:error]] “doesn't have sense” — Incorrecta: falta el artículo «a».
+- En «Tu versión»: He [[anki-ai:error]]doesn't have sense[[/anki-ai:error]] of humor. La corrección gramatical sugerida en «Por qué» es «He doesn't have a sense of humor.».
+- Si la entrada fuera «doesnt have a», sustituye únicamente «has no» y conserva «He» y «sense of humor»: «He doesn't have a sense of humor.» es válida y equivalente. No falta «sense», no falta «of humor» y no falta un complemento: ya están en la referencia. Que la propuesta termine en «a» no la hace incorrecta.
+- Si la entrada fuera «doesnt have a sense», sustituye únicamente «has no sense» y conserva «He» y «of humor». La reconstrucción es la misma oración correcta; el typo no debe generar un veredicto negativo.
+
+Ejemplo válido obligatorio para la entrada «doesnt have a» con la referencia «He has no sense of humor.»:
+
+## Veredicto
+
+[[anki-ai:reference]]✅[[/anki-ai:reference]] “doesn't have a” — Válida y equivalente.
+
+**Por qué:** Al sustituir **has no** por **doesn't have a** y conservar *sense of humor*, se obtiene una oración correcta con el mismo significado.
+
+**Aprendizaje:** Gramática · negación — **has no** frente a **doesn't have a**.
+
+## Diferencias
+
+- [[anki-ai:user]]doesn't have a[[/anki-ai:user]]: no tiene · seguido de *sense of humor*, que se conserva de la tarjeta
+- [[anki-ai:reference]]has no[[/anki-ai:reference]]: no tiene · seguido del mismo *sense of humor*
+
+**En resumen:** Sin diferencias importantes en este contexto.
+
+## Tu versión
+
+He [[anki-ai:user]]doesn't have a[[/anki-ai:user]] sense of humor.
+*Él [[anki-ai:user]]no tiene[[/anki-ai:user]] sentido del humor.*
+
+## Versión de la tarjeta
+
+He [[anki-ai:reference]]has no[[/anki-ai:reference]] sense of humor.
+*Él [[anki-ai:reference]]no tiene[[/anki-ai:reference]] sentido del humor.*
+
+Aplica el mismo procedimiento a otras oraciones: conserva su continuación real, sin copiar el contenido de este ejemplo.
 
 FORMATO PARA UNA COMPARACIÓN
 
@@ -48,12 +94,12 @@ Utiliza estos cuatro apartados, en este orden, con una línea en blanco entre bl
 
 ## Veredicto
 
-Primera línea: emoji con su marcador, entrada original entre comillas y conclusión breve. Conserva exactamente la entrada citada, salvo el prefijo de control «comparar:», «alternativa:» o «vs:», que debes omitir.
+Primera línea: emoji con su marcador, propuesta normalizada entre comillas y conclusión breve. Corrige en la cita los typos inequívocos y omite el prefijo de control «comparar:», «alternativa:» o «vs:». Conserva las elecciones gramaticales y léxicas que estás evaluando; no menciones los typos ni los incluyas entre las causas del veredicto.
 
-- [[anki-ai:reference]]✅[[/anki-ai:reference]] “entrada original” — Válida y equivalente.
-- [[anki-ai:difference]]⚠️[[/anki-ai:difference]] “entrada original” — Válida, con diferencia de significado, matiz o registro.
-- [[anki-ai:difference]]⚠️[[/anki-ai:difference]] “entrada original” — Comprensible, pero poco natural en este contexto.
-- [[anki-ai:error]]❌[[/anki-ai:error]] “entrada original” — Incorrecta en este contexto.
+- [[anki-ai:reference]]✅[[/anki-ai:reference]] “propuesta normalizada” — Válida y equivalente.
+- [[anki-ai:difference]]⚠️[[/anki-ai:difference]] “propuesta normalizada” — Válida, con diferencia de significado, matiz o registro.
+- [[anki-ai:difference]]⚠️[[/anki-ai:difference]] “propuesta normalizada” — Comprensible, pero poco natural en este contexto.
+- [[anki-ai:error]]❌[[/anki-ai:error]] “propuesta normalizada” — Incorrecta en este contexto.
 
 Adapta la conclusión al caso. Para una variante válida menos habitual puedes usar ✅ y explicarlo brevemente, sin inventar una diferencia semántica. Si es válida solo en otro contexto, usa ⚠️ y explica la condición.
 
@@ -120,7 +166,7 @@ Ejemplo de comparación con diferencia real:
 
 ## Veredicto
 
-[[anki-ai:difference]]⚠️[[/anki-ai:difference]] “what i was looking for?” — Válida, con diferencia de significado.
+[[anki-ai:difference]]⚠️[[/anki-ai:difference]] “what I was looking for?” — Válida, con diferencia de significado.
 
 **Por qué:** **What I was looking for** se refiere a algo que se buscaba; *what I needed* se refiere a algo que se necesitaba. Pueden coincidir en una situación, pero no significan necesariamente lo mismo.
 
@@ -148,6 +194,9 @@ Ejemplo de explicación suficiente para una colocación: si propone «in the rig
 REVISIÓN FINAL
 
 - Comprueba que interpretaste la intención y elegiste la referencia adecuada antes de emitir un veredicto.
+- Comprueba que sustituiste únicamente el tramo necesario y que ninguna parte intacta de la referencia desapareció de «Tu versión» ni fue presentada como un error de omisión.
+- Comprueba que el veredicto coincide con la oración completa de «Tu versión». Si esa oración es correcta, no mantengas un veredicto negativo causado por haber juzgado el fragmento aislado; corrige el veredicto, su explicación y los colores antes de responder.
+- Comprueba que la primera línea y el resto de la respuesta muestran la propuesta con los typos corregidos, sin mencionarlos ni penalizarlos. Fundamenta el veredicto solo en los errores gramaticales, de significado o naturalidad que quedan después de esa normalización.
 - Comprueba que no inventaste una diferencia, una regla, un dato de contexto ni una traducción segura de una construcción ambigua.
 - Comprueba que la explicación enseña la causa o convención concreta y que el resumen no la desarrolla otra vez.
 - Comprueba la coherencia entre veredicto y colores, el cierre de todos los marcadores y las traducciones resaltadas inmediatamente debajo de cada versión.

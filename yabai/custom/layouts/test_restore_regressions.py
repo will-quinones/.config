@@ -23,6 +23,47 @@ class WindowMatchingTests(unittest.TestCase):
         w=self.window(3,'Tip of the day');w['app']='Code'
         self.assertTrue(m.eligible(w))
 
+class ChromeRecreatedWindowTests(unittest.TestCase):
+    def window(self, wid, token, space=4, **changes):
+        return dict(id=wid, pid=10, app='Google Chrome', space=space,
+                    subrole='AXStandardWindow', reopen=dict(kind='chrome-window',
+                    token=token*32, profile_directory='Profile 1'), **changes)
+    def test_recreated_window_matches_its_unique_saved_space(self):
+        matches, reasons=m.match([self.window(1,'a')],
+                                [self.window(2,'b'),self.window(3,'c',space=10)])
+        self.assertEqual(matches[1]['id'],2);self.assertFalse(reasons)
+    def test_multiple_candidates_stay_ambiguous(self):
+        matches,_=m.match([self.window(1,'a')],[self.window(2,'b'),self.window(3,'c')])
+        self.assertFalse(matches)
+    def test_multiple_saved_slots_stay_ambiguous(self):
+        matches,_=m.match([self.window(1,'a'),self.window(2,'b')],[self.window(3,'c')])
+        self.assertFalse(matches)
+    def test_unidentified_window_on_another_space_is_not_adopted(self):
+        matches,_=m.match([self.window(1,'a')],[self.window(2,'b',space=10)])
+        self.assertFalse(matches)
+    def test_saved_token_wins_over_current_space(self):
+        matches,_=m.match([self.window(1,'a'),self.window(2,'b',space=10)],
+                         [self.window(3,'b'),self.window(4,'a',space=10)])
+        self.assertEqual({i:w['id'] for i,w in matches.items()},{1:4,2:3})
+    def test_excluded_windows_are_not_adopted(self):
+        for flag in ('is-minimized','is-hidden','scratchpad','is-native-fullscreen'):
+            with self.subTest(flag=flag):
+                matches,_=m.match([self.window(1,'a')],[self.window(2,'b',**{flag:True})])
+                self.assertFalse(matches)
+    def test_different_known_profile_is_not_adopted(self):
+        live=self.window(2,'b');live['reopen']['profile_directory']='Default'
+        matches,_=m.match([self.window(1,'a')],[live]);self.assertFalse(matches)
+    def test_restore_open_reuses_recreated_window_without_launch(self):
+        saved=self.window(1,'a');live=self.window(2,'b')
+        with patch.object(m,'progress'),patch.object(m,'run_open_jobs',return_value=[]) as jobs, \
+             patch.object(m.e,'windows',return_value={2:live}), \
+             patch.object(m,'with_bundles',return_value=[live]), \
+             patch.object(m.adapters,'annotate',return_value=([live],[])), \
+             patch.object(m.time,'sleep'):
+            result=m.open_parallel({'state':{'windows':[saved]}},[live],{},1)
+        self.assertEqual(jobs.call_args.args[0],[])
+        self.assertFalse(result['warnings'])
+
 class FloatingResizeTests(unittest.TestCase):
     def setUp(self):
         self.saved=dict(id=197,pid=20,space=7,app='qBittorrent',frame=dict(x=165,y=137,w=1087,h=683))
