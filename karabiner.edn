@@ -96,46 +96,59 @@
            [[:hyphen :equal_sign] ["anki-layer" 1] :!anki-layer]
            [[:hyphen :equal_sign] ["anki-layer" 0] :anki-layer]]}
 
-  {:des "Anki controls"
-   :rules [:anki
-           ;; ── layer toggle ──
-           [[:right_control :right_command] ["anki-layer" 1] :!anki-layer]
-           [[:right_control :right_command] ["anki-layer" 0] :anki-layer]
-           [:!REQa ["anki-layer" 1] :!anki-layer]
-           [:!REQa ["anki-layer" 0] :anki-layer]
-           ;; ── mouse / playback ──
-           [[{:pkey :button1} {:pkey :button2}] [{:pkey :button1} {:pkey :button1} {:pkey :button1} :!CTOt]]
-           [[:right_command {:pkey :button1}] :rewind]
-           [[:right_command {:pkey :button2}] :fast_forward]
-           [[:right_control {:pkey :button1}] :play_or_pause]
-           [:right_command :!SCz :anki-layer]
-           [:right_control :!Cz :anki-layer]
-           [:right_command :volume_decrement]
-           [:right_control :volume_increment]
-           ;; ── right shift shortcut ──
-           [:right_shift :!OCs]
-           [{:pkey :button1} :return_or_enter :anki-layer]
-           [{:pkey :button2} :semicolon :anki-layer]
-           ;; ── inf and stats toggles ──
-           [:#Pquote [:i ["inf" 1] ["stats" 0]] [:anki-layer :!inf]]
-           [:#Pquote [:escape ["inf" 0]] [:anki-layer :inf]]
-           [:close_bracket [:t ["stats" 1] ["inf" 0]] [:anki-layer :!stats]]
-           [:close_bracket [:escape ["stats" 0]] [:anki-layer :stats]]
-            ;; ── scroll shortcuts in info and stats ──
+   {:des "Anki controls"
+    :rules [:anki
+            ;; ── Toggle layer ──
+            [[:right_control :right_command] ["anki-layer" 1] :!anki-layer]
+            [[:right_control :right_command] ["anki-layer" 0] :anki-layer]
+            [:!REQa ["anki-layer" 1] :!anki-layer]
+            [:!REQa ["anki-layer" 0] :anki-layer]
+
+            ;; ── Mouse and media controls ──
+            [[{:pkey :button1} {:pkey :button2}] [{:pkey :button1} {:pkey :button1} {:pkey :button1} :!CTOt]]
+            [[:right_command {:pkey :button1}] :rewind]
+            [[:right_command {:pkey :button2}] :fast_forward]
+            [[:right_control {:pkey :button1}] :play_or_pause]
+            [:!E#Psemicolon :rewind]
+            [:!E#Pquote :play_or_pause]
+            [:!E#Preturn_or_enter :fast_forward]
+            [:!E#Pperiod :volume_decrement]
+            [:!E#Pslash :volume_increment]
+
+            ;; ── Review controls ──
+            [{:pkey :button1} :return_or_enter :anki-layer]
+            [{:pkey :button2} :semicolon :anki-layer]
+            [:hyphen :d]
+            [:equal_sign :s]
+
+            ;; ── Undo and volume ──
+            [:right_command :!SCz :anki-layer]
+            [:right_control :!Cz :anki-layer]
+            [:right_command :volume_decrement]
+            [:right_control :volume_increment]
+
+            ;; ── Right shift shortcut ──
+            [:right_shift :!OCs]
+
+            ;; ── Info and stats ──
+            [:#Pquote [:i ["inf" 1] ["stats" 0]] [:anki-layer :!inf]]
+            [:#Pquote [:escape ["inf" 0]] [:anki-layer :inf]]
+            [:close_bracket [:t ["stats" 1] ["inf" 0]] [:anki-layer :!stats]]
+            [:close_bracket [:escape ["stats" 0]] [:anki-layer :stats]]
+
+            ;; ── Scroll in info and stats ──
             [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :inf]]
             [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :inf]]
             [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :stats]]
             [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :stats]]
-            ;; ── answer and scroll shortcuts anywhere else in Anki ──
-            [:hyphen :d]
-            [:equal_sign :s]
             [:!Ehyphen {:mkey {:vwheel -25 :speed 2}}]
             [:!Eequal_sign {:mkey {:vwheel 25 :speed 2}}]
-           ;; ── misc ──
-           [:#Pslash :r :anki-layer]
-           [:backslash [:escape ["inf" 0] ["stats" 0]] :anki-layer]
-           [:comma :!C#Pz :anki-layer]
-           [:period :!SC#Pz :anki-layer]]}
+
+            ;; ── Miscellaneous ──
+            [:#Pslash :r :anki-layer]
+            [:backslash [:escape ["inf" 0] ["stats" 0]] :anki-layer]
+            [:comma :!C#Pz :anki-layer]
+            [:period :!SC#Pz :anki-layer]]}
 
   ;; ════════════════════════════════ Yabai ═══════════════════════════════════
   {:des "Mouse mode"

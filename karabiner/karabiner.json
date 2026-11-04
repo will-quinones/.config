@@ -468,6 +468,142 @@
           "type" : "basic"
         }, {
           "from" : {
+            "key_code" : "semicolon",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "consumer_key_code" : "rewind"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "quote",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "consumer_key_code" : "play_or_pause"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "return_or_enter",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "consumer_key_code" : "fast_forward"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "period",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "consumer_key_code" : "volume_decrement"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "slash",
+            "modifiers" : {
+              "mandatory" : [ "right_option" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "consumer_key_code" : "volume_increment"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "pointing_button" : "button1"
+          },
+          "to" : [ {
+            "key_code" : "return_or_enter"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          }, {
+            "name" : "anki-layer",
+            "value" : 1,
+            "type" : "variable_if"
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "pointing_button" : "button2"
+          },
+          "to" : [ {
+            "key_code" : "semicolon"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          }, {
+            "name" : "anki-layer",
+            "value" : 1,
+            "type" : "variable_if"
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "hyphen"
+          },
+          "to" : [ {
+            "key_code" : "d"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "equal_sign"
+          },
+          "to" : [ {
+            "key_code" : "s"
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
             "key_code" : "right_command"
           },
           "to" : [ {
@@ -535,38 +671,6 @@
           "conditions" : [ {
             "type" : "frontmost_application_if",
             "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
-            "pointing_button" : "button1"
-          },
-          "to" : [ {
-            "key_code" : "return_or_enter"
-          } ],
-          "conditions" : [ {
-            "type" : "frontmost_application_if",
-            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "anki-layer",
-            "value" : 1,
-            "type" : "variable_if"
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
-            "pointing_button" : "button2"
-          },
-          "to" : [ {
-            "key_code" : "semicolon"
-          } ],
-          "conditions" : [ {
-            "type" : "frontmost_application_if",
-            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          }, {
-            "name" : "anki-layer",
-            "value" : 1,
-            "type" : "variable_if"
           } ],
           "type" : "basic"
         }, {
@@ -775,30 +879,6 @@
             "name" : "stats",
             "value" : 1,
             "type" : "variable_if"
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
-            "key_code" : "hyphen"
-          },
-          "to" : [ {
-            "key_code" : "d"
-          } ],
-          "conditions" : [ {
-            "type" : "frontmost_application_if",
-            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
-          } ],
-          "type" : "basic"
-        }, {
-          "from" : {
-            "key_code" : "equal_sign"
-          },
-          "to" : [ {
-            "key_code" : "s"
-          } ],
-          "conditions" : [ {
-            "type" : "frontmost_application_if",
-            "bundle_identifiers" : [ "^net\\.ankiweb\\.anki$" ]
           } ],
           "type" : "basic"
         }, {
