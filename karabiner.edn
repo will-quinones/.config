@@ -115,6 +115,21 @@
             [:!E#Pperiod :volume_decrement]
             [:!E#Pslash :volume_increment]
 
+            ;; ── Info and stats ──
+            [:#Pquote [:i ["inf" 1] ["stats" 0]] [:anki-layer :!inf]]
+            [:#Pquote [:escape ["inf" 0]] [:anki-layer :inf]]
+            [:close_bracket [:t ["stats" 1] ["inf" 0]] [:anki-layer :!stats]]
+            [:close_bracket [:escape ["stats" 0]] [:anki-layer :stats]]
+
+            ;; Keep specific scrolling rules before the general review keys.
+            ;; ── Scroll in info and stats ──
+            [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :inf]]
+            [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :inf]]
+            [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :stats]]
+            [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :stats]]
+            [:!Ehyphen {:mkey {:vwheel -25 :speed 2}}]
+            [:!Eequal_sign {:mkey {:vwheel 25 :speed 2}}]
+
             ;; ── Review controls ──
             [{:pkey :button1} :return_or_enter :anki-layer]
             [{:pkey :button2} :semicolon :anki-layer]
@@ -129,20 +144,6 @@
 
             ;; ── Right shift shortcut ──
             [:right_shift :!OCs]
-
-            ;; ── Info and stats ──
-            [:#Pquote [:i ["inf" 1] ["stats" 0]] [:anki-layer :!inf]]
-            [:#Pquote [:escape ["inf" 0]] [:anki-layer :inf]]
-            [:close_bracket [:t ["stats" 1] ["inf" 0]] [:anki-layer :!stats]]
-            [:close_bracket [:escape ["stats" 0]] [:anki-layer :stats]]
-
-            ;; ── Scroll in info and stats ──
-            [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :inf]]
-            [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :inf]]
-            [:hyphen {:mkey {:vwheel -25 :speed 2}} [:anki-layer :stats]]
-            [:equal_sign {:mkey {:vwheel 25 :speed 2}} [:anki-layer :stats]]
-            [:!Ehyphen {:mkey {:vwheel -25 :speed 2}}]
-            [:!Eequal_sign {:mkey {:vwheel 25 :speed 2}}]
 
             ;; ── Miscellaneous ──
             [:#Pslash :r :anki-layer]
