@@ -110,8 +110,8 @@
             [[:right_command {:pkey :button2}] :fast_forward]
             [[:right_control {:pkey :button1}] :play_or_pause]
             [:!E#Psemicolon :rewind]
-            [:!E#Pquote :play_or_pause]
-            [:!E#Preturn_or_enter :fast_forward]
+            [:!E#Pquote :fast_forward]
+            [:!E#Preturn_or_enter :play_or_pause]
             [:!E#Pperiod :volume_decrement]
             [:!E#Pslash :volume_increment]
 

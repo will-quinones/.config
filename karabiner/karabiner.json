@@ -491,7 +491,7 @@
             }
           },
           "to" : [ {
-            "consumer_key_code" : "play_or_pause"
+            "consumer_key_code" : "fast_forward"
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
@@ -507,7 +507,7 @@
             }
           },
           "to" : [ {
-            "consumer_key_code" : "fast_forward"
+            "consumer_key_code" : "play_or_pause"
           } ],
           "conditions" : [ {
             "type" : "frontmost_application_if",
