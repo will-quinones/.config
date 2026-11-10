@@ -1202,6 +1202,60 @@
           "type" : "basic"
         } ]
       }, {
+        "description" : "Herdr navigation in Desktop",
+        "manipulators" : [ {
+          "from" : {
+            "key_code" : "u",
+            "modifiers" : {
+              "mandatory" : [ "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "key_code" : "u",
+            "modifiers" : [ "left_control", "left_option" ]
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^dev\\.herdr\\.app$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "p",
+            "modifiers" : {
+              "mandatory" : [ "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "key_code" : "y",
+            "modifiers" : [ "left_control", "left_option" ]
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^dev\\.herdr\\.app$" ]
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "n",
+            "modifiers" : {
+              "mandatory" : [ "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "key_code" : "n",
+            "modifiers" : [ "left_control", "left_option" ]
+          } ],
+          "conditions" : [ {
+            "type" : "frontmost_application_if",
+            "bundle_identifiers" : [ "^dev\\.herdr\\.app$" ]
+          } ],
+          "type" : "basic"
+        } ]
+      }, {
         "description" : "Next, Prev Cursor VsCode",
         "manipulators" : [ {
           "from" : {
@@ -1920,6 +1974,18 @@
           },
           "to" : [ {
             "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle warp || open -a Warp"
+          } ],
+          "type" : "basic"
+        }, {
+          "from" : {
+            "key_code" : "h",
+            "modifiers" : {
+              "mandatory" : [ "fn" ],
+              "optional" : [ "caps_lock" ]
+            }
+          },
+          "to" : [ {
+            "shell_command" : "/opt/homebrew/bin/yabai -m window --toggle herdr || open -b dev.herdr.app"
           } ],
           "type" : "basic"
         }, {
@@ -3449,22 +3515,6 @@
           "conditions" : [ {
             "type" : "frontmost_application_if",
             "bundle_identifiers" : [ "^com\\.jetbrains.intellij\\.ce$" ]
-          } ],
-          "type" : "basic"
-        } ]
-      }, {
-        "description" : "ShortCat",
-        "manipulators" : [ {
-          "from" : {
-            "key_code" : "h",
-            "modifiers" : {
-              "mandatory" : [ "fn" ],
-              "optional" : [ "caps_lock" ]
-            }
-          },
-          "to" : [ {
-            "key_code" : "spacebar",
-            "modifiers" : [ "left_command", "left_control", "left_option" ]
           } ],
           "type" : "basic"
         } ]

@@ -9,9 +9,9 @@ delivery = "off"
 [keys]
 previous_tab = ["prefix+p", "alt+shift+i"]
 next_tab = ["prefix+n", "alt+shift+o"]
-previous_workspace = "alt+shift+u"
-next_workspace = "alt+shift+y"
-last_pane = "alt+shift+n"
+previous_workspace = ["alt+shift+u", "ctrl+alt+u"]
+next_workspace = ["alt+shift+y", "ctrl+alt+y"]
+last_pane = ["alt+shift+n", "ctrl+alt+n"]
 
 [ui.sound]
 enabled = false

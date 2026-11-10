@@ -24,10 +24,11 @@
                             "com\\.exafunction\\.windsurf"
                             "com.google.antigravity"
                             "com.todesktop.230313mzl4w4u92"]
-                :terminals ["^com\\.apple\\.Terminal$"
-                            "^com\\.googlecode\\.iterm2$"]
-                :warp      ["^dev\\.warp\\.Warp-Stable$"]
-                :mail      ["^com\\.apple\\.mail$"]
+                 :terminals ["^com\\.apple\\.Terminal$"
+                             "^com\\.googlecode\\.iterm2$"]
+                 :warp      ["^dev\\.warp\\.Warp-Stable$"]
+                 :herdrdesktop ["^dev\\.herdr\\.app$"]
+                 :mail      ["^com\\.apple\\.mail$"]
                 :notes     ["^com\\.apple\\.Notes$"]
                 :calendar  ["^com\\.apple\\.iCal$"]
                 :preview1  ["^com\\.apple\\.Preview$" :previewsidebar]
@@ -159,8 +160,8 @@
            [:keypad_3 :!C#Ptab]]}
 
   ;; Fn navigation belongs to Herdr; Fn+Cmd keeps Warp tab navigation.
-  {:des "Herdr navigation in Warp"
-   :rules [:warp
+   {:des "Herdr navigation in Warp"
+    :rules [:warp
            [:!F#Pi :!OSi]
            [:!F#Po :!OSo]
            [:!F#Pu :!OSu]
@@ -168,7 +169,13 @@
             [:!F#Pn :!OSn]
             [:!SC#Pr [:!Tx :l]]
             [:!FC#Pi :!SCopen_bracket]
-           [:!FC#Po :!SCclose_bracket]]}
+            [:!FC#Po :!SCclose_bracket]]}
+
+   {:des "Herdr navigation in Desktop"
+    :rules [:herdrdesktop
+            [:!F#Pu :!TOu]
+            [:!F#Pp :!TOy]
+            [:!F#Pn :!TOn]]}
 
    {:des "Next, Prev Cursor VsCode"
     :rules [:code
@@ -249,7 +256,8 @@
            [:!F#Pw [:yabai "window --toggle musica || open -a Music"]]
            [:!F#Pq [:yabai "window --toggle whatsapp || open -a WhatsApp"]]
            [:!FC#Pq [:yabai "window --toggle slack || open -a Slack"]]
-           [:!F#Pd [:yabai "window --toggle warp || open -a Warp"]]
+            [:!F#Pd [:yabai "window --toggle warp || open -a Warp"]]
+            [:!F#Ph [:yabai "window --toggle herdr || open -b dev.herdr.app"]]
            [:!FC#Pc [:yabai "window --toggle claude || open -a Claude"]]
            [:!F#Pc [:yabai "window --toggle gpt || open -a ChatGPT"]]
            [:!F#Pg [:yabai "window --toggle gemini || open -a Gemini"]]
@@ -400,9 +408,6 @@
    {:des "Next, Prev Cursor intellij"
    :rules [[:!F#Pu :!Thyphen :intellij]
            [:!F#Pp :!SThyphen :intellij]]}
-
-  {:des "ShortCat"
-   :rules [[:!F#Ph :!COTspacebar]]}
 
   {:des "DeepL"
    :rules [;; [:!F#Pt :!CTOt nil {:delayed {:invoked [:!Ctab :fn] :canceled []} :params {:delay 200}}]
